@@ -61,7 +61,7 @@ Your goal, after finishing the race successfully, is to drive through the course
 Here are the details of the challenge:
 
 * You will be given 2 locations at random via the `basement_point_publisher` node -- see the Stata map for an example of possible locations. We will not assign locations outside of the range of the ones on the map. 
-* You must detect the correct sign out of the three objects at each location and park in front of it (stop for 5 seconds)
+* You must detect the correct sign out of the three objects at each location using YOLO and park in front of it (stop for 5 seconds)
 * You should avoid running the traffic light, taking out pedestrians, or otherwise creating havoc on the road.
 * You should drive Mrs. Puff back to the starting location if possible; this might earn you extra points in her book!
 
@@ -90,7 +90,7 @@ You will recieve 3 points for each location you successfully reach. At each loca
 
 Pedestrian Crosswalk: The good citizens of Bikini Bottom are going about their day, and often need to cross the street (TAs walking back and forth)! You’ll need to navigate through the city without hitting any pedestrians; otherwise, your boating test might be in trouble.
 
-Traffic light: Running a red light will likely alarm Mrs. Puff, and hurt your chances of successfully attaining a boating license!
+Traffic Light: Running a red light will likely alarm Mrs. Puff, and hurt your chances of successfully attaining a boating license!
 
 The maximum penalty you can recieve for detections is 3 points.
 
@@ -124,9 +124,9 @@ If you have trouble getting accurate localization, consider:
 
 ## Part B: Krusty Krab Pizza Delivery <a name="partb"></a>
 
-<img src="media/spongebob_pizza.png" width="400"/>
-
 <img src="media/Krusty_Krab_Pizza.png" width="400"/>
+
+<img src="media/spongebob_pizza.png" width="400"/>
 
 ### Environment and Task
 
