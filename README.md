@@ -22,7 +22,7 @@
 
 Congratulations on completing the six labs of RSS! 
 
-This semester, you've learned how to implement real-time robotics software on a widely-used software framework (ROS). You know how to read sensor data (LiDAR, Camera, Odometry) and convert it into a useful representation of the world (homography, localization). You've written algorithms that make plans over the world's state (parking, line following, path planning) and combined them with controllers (PD control, pure pursuit) to accomplish tasks. 
+This semester, you've learned how to implement real-time robotics software on a widely-used software framework (ROS2). You know how to read sensor data (LiDAR, Camera, Odometry) and convert it into a useful representation of the world (homography, localization). You've written algorithms that make plans over the world's state (parking, line following, path planning) and combined them with controllers (PD control, pure pursuit) to accomplish tasks. 
 
 Now, your team will apply everything you've learned to successfully pass your boating test and deliver a Krusty Krab Pizza!
 
