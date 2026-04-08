@@ -54,7 +54,7 @@ Part A is worth 25% of your Final Challenge technical grade. You get 3 attempts 
 
 ### Environment and Task
 
-Mrs. Puff's Boating Test will take place in Bikini Bottom (Stata basement). You, as Spongebob, need to pass your 1,258,057th attempt at the boating test and get your license (no loopholes allowed)! This will require you to successfully navigate through the city, avoid pedestrians, and correctly stop for traffic lights and parking meters. 
+Mrs. Puff's Boating Test will take place in Bikini Bottom (Stata basement). You, as Spongebob, need to pass your [1,258,057th attempt](http://en.spongepedia.org/index.php?title=Mrs._Puff,_You%E2%80%99re_Fired_(Episode)) at the boating test and get your license (no loopholes allowed)! This will require you to successfully navigate through the city, avoid pedestrians, and correctly stop for traffic lights and parking meters. 
 
 Your goal, after finishing the race successfully, is to drive through the course in Stata basement, where you will be asked to park at 2 TA selected locations. At each location, there will be three objects: you must correctly identify either the parking meter or the stop sign, and park in front of it before continuing on your way. Along the way, there will be a traffic light and pedestrian crosswalk as well. The exact configuration of locations and driving signs will be a secret until Test day; however, the location of the pedestrian crosswalk and traffic light will not change. 
 
@@ -130,7 +130,7 @@ If you have trouble getting accurate localization, consider:
 
 ### Environment and Task
 
-The Krusty Krab is delivering its second pizza ever! Mr. Krabs, seeing a promising business venture but concerned following the results of the first attempt, has asked you to deliver it as fast as possible! The Krusty Krab Pizza Delivery will take place on the entire Johnson track loop. This is a standard-size 200m track. Cars may be assigned to follow any of the track's six lanes and will be informed of their lane assignment the morning of the race. Lanes are numbered from left to right as shown in the image below.
+The Krusty Krab is delivering its second pizza ever! Mr. Krabs, seeing a promising business venture but [concerned following the results of the first attempt](https://www.youtube.com/watch?v=ddX1hallWEI), has asked you to deliver it as fast as possible! The Krusty Krab Pizza Delivery will take place on the entire Johnson track loop. This is a standard-size 200m track. Cars may be assigned to follow any of the track's six lanes and will be informed of their lane assignment the morning of the race. Lanes are numbered from left to right as shown in the image below.
 
 <!-- <img src="media/final_race.PNG" width="300" /> -->
 <img src="media/start_area.jpg" width="400"/>
