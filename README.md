@@ -10,7 +10,7 @@
 
 * [Introduction](https://github.com/mit-rss/final_challenge2026#introduction)
     * [Grading](https://github.com/mit-rss/final_challenge2026#grading)
-* [Krusty Krab Pizza Delivery](https://github.com/mit-rss/final_challenge2026#parta)
+* [The Great Snail Race](https://github.com/mit-rss/final_challenge2026#parta)
 * [Mrs. Puff Boating School](https://github.com/mit-rss/final_challenge2026#partb)
 * [Briefing](https://github.com/mit-rss/final_challenge2026#Briefing)
 * [General Notes](https://github.com/mit-rss/final_challenge2026#general_notes)
@@ -24,15 +24,15 @@ Congratulations on completing the six labs of RSS!
 
 This semester, you've learned how to implement real-time robotics software on a widely-used software framework (ROS2). You know how to read sensor data (LiDAR, Camera, Odometry) and convert it into a useful representation of the world (homography, localization). You've written algorithms that make plans over the world's state (parking, line following, path planning) and combined them with controllers (PD control, pure pursuit) to accomplish tasks. 
 
-Now, your team will apply everything you've learned to successfully pass your boating test and deliver a Krusty Krab Pizza!
+Now, your team will apply everything you've learned to successfully pass your boating test and race your snail (i.e your racecar)!
 
 <img src="media/patty_wagon.png" width="500"/>
 
 ### Spongebob…!
 
-You have been perfecting your racecar for the last three months. Now, it's time to put your boating skills to the test! Each team will step into the role of SpongeBob, and you have one all-important mission: pass Mrs. Puff’s boating test and finally earn your license. There will be two parts to this challenge —- first, safely navigating through Bikini Bottom while following the rules of the road, and second, becoming the fastest team to complete the Krusty Krab Pizza Delivery challenge.
+You have been perfecting your racecar for the last three months. Now, it's time to put your boating skills to the test! Each team will step into the role of SpongeBob, and you have one all-important mission: pass Mrs. Puff’s boating test and finally earn your license. There will be two parts to this challenge —- first, safely navigating through Bikini Bottom while following the rules of the road, and second, becoming the fastest team to complete the Bikini Bottom Snail Race.
   - In Mrs. Puff's Boating School, you will need to navigate safely through Bikini Bottom, obeying all laws of the road without hitting any unsuspecting fishfolk
-  - In Krusty Krab Pizza Delivery, your team will go head-to-head with other teams to be the fastest to deliver Krusty Krab's second ever pizza order without falling off the track
+  - In The Great Snail Race, your team will go head-to-head with other teams to be the fastest snail without shimmying out of your lane.
     
 Luckily, through RSS, you’ve learned everything you need to become the best sponge under the sea!
 
@@ -44,7 +44,7 @@ Luckily, through RSS, you’ve learned everything you need to become the best sp
 | Part B: Mrs. Puff's Boating School (out of 10) | 25% |
 | Briefing Grade (out of 10) | 40% |
 
-## Part A: Krusty Krab Pizza Delivery <a name="partb"></a>
+## Part A: The Great Snail Race <a name="partb"></a>
 
 <img src="media/Krusty_Krab_Pizza.png" width="400"/>
 
@@ -52,12 +52,14 @@ Luckily, through RSS, you’ve learned everything you need to become the best sp
 
 ### Environment and Task
 
-The Krusty Krab is delivering its second pizza ever! Mr. Krabs, seeing a promising business venture but [concerned following the results of the first attempt](https://www.youtube.com/watch?v=ddX1hallWEI), has asked you to deliver it as fast as possible! The Krusty Krab Pizza Delivery will take place on the entire Johnson track loop. This is a standard-size 200m track. Cars may be assigned to follow any of the track's six lanes and will be informed of their lane assignment the morning of the race. Lanes are numbered from left to right as shown in the image below.
+The crowd is roaring, the bubbles are floating, and it’s time for the most prestigious event in all of Bikini Bottom… the Great Snail Race! It’s all about speed, slime, and snail pride. SpongeBob SquarePants arrives with his beloved snail, Gary. Squidward Tennisballs (or is it Tentacles) enters Snelly, the high-pedigree purebred snail. And lastly, Patrick Star brings Rocky… the rock.
+
+The race will take place on the legendary Bikni Botton Johnson Track Loop—a standard 200-meter course. Each snail (that’s your car!) will be assigned to one of six lanes, revealed on race day. Stay in your lane. No snail likes a lane hog. Lanes are numbered from left to right as shown in the image below. Pick your favorite character and prepare for glory. Will you channel SpongeBob’s unstoppable enthusiasm, Squidward’s questionable confidence, or Patrick’s… unwavering belief in a rock?
 
 <!-- <img src="media/final_race.PNG" width="300" /> -->
 <img src="media/start_area.jpg" width="400"/>
 
-Your car's task is to complete the 200-meter loop around the track as fast as possible, while staying in your assigned lane. Any kind of collision (with another car or with something in Johnson) will seriously jeapordize your delivery mission, and will be penalized heavily. You should have a safety controller running on your car, but be careful that this doesn't stop your car if there is another car driving next to it on the track!
+Your car's task is to complete the 200-meter loop around the track as fast as possible, while staying in your assigned lane. Any kind of collision (with another car, snail, or with something in Johnson) will seriously jeapordize your racer score, and will be penalized heavily. You should have a safety controller running on your car, but be careful that this doesn't stop your car if there is another car driving next to it on the track!
 
 We have provided images and rosbags of the race track in `/racetrack_images` for easier testing/debugging. 
 
