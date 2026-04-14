@@ -40,11 +40,11 @@ Luckily, through RSS, you’ve learned everything you need to become the best sp
 
 | Deliverable  Grade | Weighting             |
 |---------------|----------------------------------------------------------------------------|
-| Part A: Krusty Krab Pizza Delivery (out of 10) | 35% |
+| Part A: The Great Snail Race (out of 10) | 35% |
 | Part B: Mrs. Puff's Boating School (out of 10) | 25% |
 | Briefing Grade (out of 10) | 40% |
 
-## Part A: The Great Snail Race <a name="partb"></a>
+## Part A: The Great Snail Race <a name="parta"></a>
 
 <img src="media/Krusty_Krab_Pizza.png" width="400"/>
 
@@ -65,9 +65,9 @@ We have provided images and rosbags of the race track in `/racetrack_images` for
 
 The rosbag can be downloaded at this [link](https://drive.google.com/file/d/1laqouQzSVUhgAsqJVQ08WQdYrOwvVxg0/view?usp=sharing)
 
-Part B is worth 35% of your Final Challenge technical grade. Your grade will be calculated based on the time your car takes to drive around the track (`best_race_split`, in seconds) as follows:
+Part A is worth 35% of your Final Challenge technical grade. Your grade will be calculated based on the time your car takes to drive around the track (`best_race_split`, in seconds) as follows:
 
-  `Part B grade = min(10 + (5 - best_race_split/10), 11) - penalties`
+  `Part A grade = min(10 + (5 - best_race_split/10), 11) - penalties`
 
 ### Scoring
 
@@ -96,13 +96,13 @@ Here are some things you may consider in developing your approach:
 
 Please note that Hough Transforms will very likely be useful; helpful resources are [here](https://towardsdatascience.com/lines-detection-with-hough-transform-84020b3b1549) and [here](https://docs.opencv.org/3.4/d9/db0/tutorial_hough_lines.html).
 
-## Part B: Mrs. Puff's Boating School <a name="parta"></a>
+## Part B: Mrs. Puff's Boating School <a name="partb"></a>
 
 <img src="media/boating_school.png" width="500"/>
 
-Part A is worth 25% of your Final Challenge technical grade. You get 3 attempts and your grade is based on your best attempt out of 3. Your grade will be calculated based on completion of the course and the number of penalties you incur as follows. 
+Part B is worth 25% of your Final Challenge technical grade. You get 3 attempts and your grade is based on your best attempt out of 3. Your grade will be calculated based on completion of the course and the number of penalties you incur as follows. 
 
-`Part A grade = boating_test_score - penalties`
+`Part B grade = boating_test_score - penalties`
 
 ### Environment and Task
 
@@ -203,7 +203,7 @@ You are encouraged to build your solution on code written in previous labs! If y
 
 ## FAQ
 
-### Part A: Krusty Krab Pizza Delivery
+### Part A: The Great Snail Race
 
 *Do we need to design a safety controller for this challenge?* 
 * You should run some kind of safety controller during the challenge, but don't need to spend a lot of time adapting it to the race setting. The easiest way to keep the race collision-free will be for each team to design a robust lane-following solution and remain in-lane. Note: some teams showed solutions in Lab 3 that considered a fixed angle range in front of a car only when deciding when to stop the car. **You should make sure that cars racing alongside yours will not wrongly trigger your safety controller, especially when turning bends in the track!** Consider testing with objects in adjacent lanes.
