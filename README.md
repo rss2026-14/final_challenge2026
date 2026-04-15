@@ -30,9 +30,10 @@ Now, your team will apply everything you've learned to successfully pass your bo
 
 ### Spongebob…!
 
-You have been perfecting your racecar for the last three months. Now, it's time to put your boating skills to the test! Each team will step into the role of SpongeBob, and you have one all-important mission: pass Mrs. Puff’s boating test and finally earn your license. There will be two parts to this challenge —- first, safely navigating through Bikini Bottom while following the rules of the road, and second, becoming the fastest team to complete the Bikini Bottom Snail Race.
-  - In Mrs. Puff's Boating School, you will need to navigate safely through Bikini Bottom, obeying all laws of the road without hitting any unsuspecting fishfolk
+You have been perfecting your racecar for the last three months. Now, it's time to put your boating skills to the test! Each team will step into the role of SpongeBob, and you have two key
+missions: prove your status as the best Gary owner, and pass Mrs. Puff’s boating test and finally earn your license. There will be two parts to this challenge —- first, becoming the fastest team to complete the Bikini Bottom Snail Race, and second, safely navigating through Bikini Bottom while following the rules of the road.
   - In The Great Snail Race, your team will go head-to-head with other teams to be the fastest snail without shimmying out of your lane.
+  - In Mrs. Puff's Boating School, you will need to navigate safely through Bikini Bottom, obeying all laws of the road without hitting any unsuspecting fishfolk
     
 Luckily, through RSS, you’ve learned everything you need to become the best sponge under the sea!
 
