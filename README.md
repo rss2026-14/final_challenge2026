@@ -4,7 +4,7 @@
 | Code Pushed to Github  | Saturday, May 9th 1PM EST |
 | Briefing Slides | Monday, May 4th at 1PM EST |
 | Briefing (15 min presentation + 5 min Q&A) | May 4th or 6th at 3PM EST |
-| [Team Member Assessment](https://forms.gle/FuwuAduxHc7Q8iQz6)  | Saturday, May 9th at 11:59PM EST |
+| [Team Member Assessment](https://docs.google.com/forms/d/e/1FAIpQLScgvka9gB8VZAjna_ouaHSj-YrjNZgs4_61EGgAp_u_UktGWA/viewform?usp=dialog)  | Saturday, May 9th at 11:59PM EST |
 
 ## Table of Contents
 
