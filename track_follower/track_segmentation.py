@@ -29,10 +29,10 @@ def cd_color_segmentation(img):
     mask = np.zeros((h, w), dtype=np.uint8)
 
     # Define the region you want to keep
-    top = int(h * 0.4)
-    bottom = int(h * 0.7)
-    left = int(h * 0.3)
-    right = int(h * 0.7)
+    top = int(h * 0.5)
+    bottom = int(h * 0.9)
+    left = int(h * 0.2)
+    right = int(h * 0.8)
 
     mask[top:bottom, left:right] = 255
 
@@ -42,15 +42,10 @@ def cd_color_segmentation(img):
     # Apply color mask
     HSV_img = cv2.cvtColor(masked, cv2.COLOR_BGR2HSV)
 
-    lower_bound1 = np.array([100, 15, 55])
-    upper_bound1 = np.array([180, 160, 140])
+    lower_bound = np.array([0, 0, 130])
+    upper_bound = np.array([180, 50, 255])
 
-    lower_bound2 = np.array([0, 15, 55])
-    upper_bound2 = np.array([15, 160, 140])
-
-    track_mask1 = cv2.inRange(HSV_img, lower_bound1, upper_bound1)
-    track_mask2 = cv2.inRange(HSV_img, lower_bound2, upper_bound2)
-    track_mask = cv2.bitwise_or(track_mask1, track_mask2)
+    track_mask = cv2.inRange(HSV_img, lower_bound, upper_bound)
 
     # Erode & dilate
     kernel = np.ones((3, 3), np.uint8)
