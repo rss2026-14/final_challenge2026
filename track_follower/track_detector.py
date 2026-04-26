@@ -51,36 +51,30 @@ class TrackDetector(Node):
             self.get_logger().error(f"Failed to convert image: {e}")
             return
 
-        # Get bounding box from color segmentation
-        # The function returns ((x1, y1), (x2, y2))
-        bounding_box = cd_color_segmentation(image)
+        # Get track from color segmentation
+        # The function returns (px,py)
+        drive_point = cd_color_segmentation(image)
 
         # Create message to publish
         track_px_msg = ConeLocationPixel()
 
-        if bounding_box is not None:
+        if drive_point is not None:
             # Extract bounding box coordinates from the tuple of tuples format
-            (x_min, y_min), (x_max, y_max) = bounding_box
-
-            # Calculate bottom center pixel
-            # This point is on the ground plane where the track is
-            u = (x_min + x_max) // 2  # center x coordinate
-            v = y_max  # bottom y coordinate
+            x,y,lines = drive_point
 
             # Fill the message
-            track_px_msg.u = float(u)
-            track_px_msg.v = float(v)
+            track_px_msg.u = float(x)
+            track_px_msg.v = float(y)
 
             # Draw debug visualization
-            # Draw bounding box
-            cv2.rectangle(image, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-            # Draw bottom center point
-            cv2.circle(image, (u, v), 5, (0, 0, 255), -1)
-            # Add text
-            cv2.putText(image, f"({u}, {v})", (u + 10, v - 10),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+            # Draw point
+            cv2.circle(image, (x, y), 5, (0, 0, 255), -1)
+            # Draw lines
+            for line in lines:
+                x1, y1, x2, y2 = line[0]
+                cv2.line(image, (x1, y1), (x2, y2), (255, 0, 0), 3)
 
-            self.get_logger().info(f"Detected track at pixel: ({u}, {v})")
+            self.get_logger().info(f"Detected track at pixel: ({x}, {y})")
         else:
             # No track detected, publish sentinel values
             track_px_msg.u = -1.0
