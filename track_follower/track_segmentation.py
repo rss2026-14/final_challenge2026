@@ -48,6 +48,7 @@ def cd_color_segmentation(img):
     # Find edges
     gray = cv2.cvtColor(colormasked, cv2.COLOR_RGB2GRAY)
     edges = cv2.Canny(gray, 100, 180)
+    lines=[]
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, 68, minLineLength=80, maxLineGap=20)
 
     # only save lines with angle > 15 degrees
