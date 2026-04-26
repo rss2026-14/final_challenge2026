@@ -52,6 +52,9 @@ def cd_color_segmentation(img):
 
     # only save lines with angle > 15 degrees
     linemask=[]
+    if not lines:
+        return None
+
     for line in lines:
         x1, y1, x2, y2 = line[0]
         angle=m.atan(abs((y2-y1)/(x2-x1)))
@@ -61,6 +64,9 @@ def cd_color_segmentation(img):
     # find and publish drive point from end of lines
     X=[]
     Y=[]
+    if not linemask:
+        return None
+
     for line in linemask:
         x1, y1, x2, y2 = line[0]
         if y1<y2:
