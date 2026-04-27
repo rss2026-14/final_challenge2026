@@ -78,8 +78,9 @@ def cd_color_segmentation(img):
             right=Line(Point(x1,y1),Point(x2,y2))
             lanes.append(line)
 
-    intersection=left.intersection(right)
-    if intersection:
-        px,py=intersection[0].evalf()
-        return px,py,lanes
+    if left is not None and right is not None:
+        intersection=left.intersection(right)
+        if intersection:
+            px,py=intersection[0].evalf()
+            return px,py,lanes
     return None
