@@ -18,7 +18,7 @@ def cd_color_segmentation(img):
     """
     Implement track detection using color segmentation algorithm
     Input:
-        img: np.3darray; the input image. RGB.
+        img: np.3darray; the input image. BGR.
     Return:
         pixel: (px,py); pixel of track to drive to, unit in px
         linemask: list of lines, each with ((x1,y1),(x2,y2))
@@ -36,7 +36,7 @@ def cd_color_segmentation(img):
     masked = cv2.bitwise_and(img, img, mask=mask)
 
     # Apply color mask
-    hsv = cv2.cvtColor(masked, cv2.COLOR_RGB2HSV)
+    hsv = cv2.cvtColor(masked, cv2.COLOR_BGR2HSV)
     lower_bound = np.array([0, 0, 130])
     upper_bound = np.array([180, 50, 255])
     track_mask = cv2.inRange(hsv, lower_bound, upper_bound)
@@ -46,7 +46,7 @@ def cd_color_segmentation(img):
     colormasked = cv2.bitwise_and(hsv, hsv, mask=dilated)
 
     # Find edges
-    gray = cv2.cvtColor(colormasked, cv2.COLOR_RGB2GRAY)
+    gray = cv2.cvtColor(colormasked, cv2.COLOR_BGR2GRAY)
     edges = cv2.Canny(gray, 100, 180)
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, 68, minLineLength=80, maxLineGap=20)
 
