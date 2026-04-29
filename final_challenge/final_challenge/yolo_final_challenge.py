@@ -79,9 +79,6 @@ class YoloAnnotatorNode(Node):
         self.person_px_pub = self.create_publisher(
             ConeLocationPixel, "/relative_person_px", 10)
         
-        self.stop_sign_px_pub = self.create_publisher(
-            ConeLocationPixel, "/relative_stop_sign_px", 10)
-        
         self.traffic_light_px_pub = self.create_publisher(
             ConeLocationPixel, "/relative_traffic_light_px", 10)
 
@@ -101,7 +98,6 @@ class YoloAnnotatorNode(Node):
         return {
             "person": (0, 255, 0),
             "parking meter": (255, 0, 0),
-            "stop sign": (0, 0, 255),
             "traffic light": (255, 255, 0),
             }
 
@@ -152,7 +148,6 @@ class YoloAnnotatorNode(Node):
         class_to_pub = {
             "parking meter": self.parking_meter_px_pub,
             "person": self.person_px_pub,
-            "stop sign": self.stop_sign_px_pub,
             "traffic light": self.traffic_light_px_pub,
         }
 
