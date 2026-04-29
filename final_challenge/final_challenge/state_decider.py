@@ -36,13 +36,9 @@ class BoatingExecutive(Node):
 
         self.park_start_time = 0.0
 
-        # Obstacle flags from separate detector/controller nodes
         self.traffic_light_obstacle = False
         self.person_obstacle = False
 
-        # --------------------
-        # Publishers
-        # --------------------
         self.goal_pub = self.create_publisher(
             PoseStamped,
             "/planner/goal",
@@ -61,9 +57,6 @@ class BoatingExecutive(Node):
             10
         )
 
-        # --------------------
-        # Subscribers
-        # --------------------
         self.create_subscription(
             Odometry,
             "/odom",
@@ -85,8 +78,6 @@ class BoatingExecutive(Node):
             10
         )
 
-        # Separate obstacle alert topics.
-        # This avoids one detector publishing False and accidentally clearing another detector's True.
         self.create_subscription(
             Bool,
             "/traffic_light_obstacle_alert",
@@ -101,8 +92,6 @@ class BoatingExecutive(Node):
             10
         )
 
-        # Parking meter location from homography.
-        # When this appears during METER_SEARCH, switch to PARKING.
         self.create_subscription(
             ConeLocation,
             "/relative_parking_meter",
@@ -113,10 +102,6 @@ class BoatingExecutive(Node):
         self.timer = self.create_timer(0.1, self.loop)
 
         self.get_logger().info("State Decider Initialized")
-
-    # ==========================================================
-    # Basic callbacks
-    # ==========================================================
 
     def odom_callback(self, msg: Odometry):
         self.current_pose = msg.pose.pose
@@ -135,8 +120,9 @@ class BoatingExecutive(Node):
 
     def parking_success_callback(self, msg: Bool):
         if msg.data and self.state == State.PARKING:
-            self.get_logger().info("Parking controller confirmed success. Holding for 5 seconds.")
-
+            self.get_logger().info(
+                "Parking controller confirmed success. Holding for 5 seconds."
+            )
             self.state = State.PARKED
             self.park_start_time = time.time()
 
@@ -146,10 +132,6 @@ class BoatingExecutive(Node):
                 f"Parking meter found at x={msg.x_pos:.2f}, y={msg.y_pos:.2f}. Switching to PARKING."
             )
             self.state = State.PARKING
-
-    # ==========================================================
-    # Obstacle callbacks
-    # ==========================================================
 
     def traffic_light_obstacle_callback(self, msg: Bool):
         self.traffic_light_obstacle = msg.data
@@ -174,10 +156,6 @@ class BoatingExecutive(Node):
                 self.get_logger().info("Obstacle cleared. Resuming previous state.")
                 self.state = self.previous_state
 
-    # ==========================================================
-    # Main state machine
-    # ==========================================================
-
     def loop(self):
         self.publish_state()
 
@@ -185,6 +163,10 @@ class BoatingExecutive(Node):
             self.hit_the_brakes()
 
         elif self.state == State.NAVIGATING:
+            # Keep publishing the goal so the planner receives it even if it started late.
+            if self.current_goal is not None:
+                self.goal_pub.publish(self.current_goal)
+
             dist = self.distance_to_goal()
 
             if dist < 2.0:
@@ -194,13 +176,9 @@ class BoatingExecutive(Node):
                 self.state = State.METER_SEARCH
 
         elif self.state == State.METER_SEARCH:
-            # Waiting for /relative_parking_meter callback.
-            # The parking_meter_callback switches to PARKING when a meter is detected.
             pass
 
         elif self.state == State.PARKING:
-            # ParkingController takes over when /mission_state == PARKING.
-            # State decider does not publish motion commands here unless obstacle/pause/success happens.
             pass
 
         elif self.state == State.PARKED:
@@ -219,7 +197,6 @@ class BoatingExecutive(Node):
                     self.get_logger().info(
                         f"Moving to next goal. {len(self.goals)} goals left in queue."
                     )
-
                 else:
                     self.state = State.DONE
                     self.get_logger().info("Course complete.")
@@ -229,10 +206,6 @@ class BoatingExecutive(Node):
 
         elif self.state == State.DONE:
             self.hit_the_brakes()
-
-    # ==========================================================
-    # Helper functions
-    # ==========================================================
 
     def publish_state(self):
         state_msg = String()
