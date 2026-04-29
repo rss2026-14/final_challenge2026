@@ -55,7 +55,7 @@ class BoatingExecutive(Node):
 
         # 3. Getting the target locations
         # self.create_subscription(PoseStamped, '/basement_point_publisher', self.goal_callback, 10)
-        self.create_subscription(PoseStamped, '/clicked_point', self.goal_callback, 10)
+        self.create_subscription(PoseStamped, '/goal_pose', self.goal_callback, 10)
 
         self.create_subscription(Bool, '/parking_success', self.parking_success_callback, 10)
         self.park_start_time = 0.0
