@@ -119,6 +119,7 @@ class BoatingExecutive(Node):
         if self.state == State.WAITING:
             self.current_goal = self.goals.pop(0)
             self.state = State.NAVIGATING
+            self.goal_pub.publish(self.current_goal)
             self.get_logger().info(f"Goal received! {len(self.goals)} more in queue.")
     def loop(self):
         # Broadcast current state so other nodes know what's happening
@@ -127,7 +128,7 @@ class BoatingExecutive(Node):
         self.state_pub.publish(state_msg)
 
         if self.state == State.NAVIGATING:
-            self.goal_pub.publish(self.current_goal)
+            # self.goal_pub.publish(self.current_goal)
             dist = self.distance_to_goal()
             if dist < 2.0:
                 self.get_logger().info(f"Within 2m (Distance: {dist:.2f}). Starting Meter Search!")
@@ -153,6 +154,7 @@ class BoatingExecutive(Node):
                 if len(self.goals) > 0:
                     self.current_goal = self.goals.pop(0)
                     self.state = State.NAVIGATING
+                    self.goal_pub.publish(self.current_goal)
                     self.get_logger().info("Moving to next goal...")
                 else:
                     self.state = State.DONE
