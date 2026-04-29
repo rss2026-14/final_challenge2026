@@ -1,0 +1,33 @@
+<launch>
+    <node pkg="final_challenge" exec="boating_executive" name="boating_executive" output="screen">
+    </node>
+
+    <node pkg="path_planning" exec="trajectory_planner" name="trajectory_planner" output="screen">
+        <param from="$(find-pkg-share path_planning)/config/real/config.yaml"/>
+        <remap from="/goal_pose" to="/planner/goal"/>
+    </node>
+
+    <node pkg="path_planning" exec="trajectory_follower" name="trajectory_follower" output="screen">
+        <param from="$(find-pkg-share path_planning)/config/real/config.yaml"/>
+    </node>
+
+    <node pkg="localization" exec="particle_filter" name="particle_filter" output="screen">
+        <param from="$(find-pkg-share path_planning)/config/real/pf_config.yaml"/>
+    </node>
+
+    <node pkg="lab03" exec="safety_stop" name="safety_stop" output="screen">
+        <param from="$(find-pkg-share path_planning)/config/real/config.yaml"/>
+    </node>
+
+    <node pkg="visual_servoing" name="parking_controller" exec="parking_controller" output="screen">
+        <param name="drive_topic" value="/vesc/low_level/input/navigation" />
+    </node>
+<!--
+    PARKING METER YOLO DETECTOR PIXEL PUBLISH THING
+    <node pkg="visual_servoing" name="cone_detector" exec="cone_detector" output="screen">
+    </node>  -->
+
+    <node pkg="visual_servoing" name="homography_transformer" exec="homography_transformer" output="screen">
+    </node>
+
+    </launch>

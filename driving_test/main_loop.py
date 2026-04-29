@@ -105,7 +105,7 @@ class BoatingSchoolExecutive(Node):
 
         # If navigating or searching, and we see an obstacle, stop
         if self.state in [State.NAVIGATING, State.METER_SEARCH, State.PARKING_APPROACH]:
-            if self.sees_red_light or self.sees_pedestrian:
+            if self.sees_red_light or self.sees_pedestrian: # sep states
                 self.get_logger().warn("Obstacle detected, please stop Ghost")
                 self.previous_state = self.state
                 self.transition_to(State.OBSTACLE_PAUSE)
@@ -119,7 +119,7 @@ class BoatingSchoolExecutive(Node):
             self.goal_pub.publish(self.current_goal)
 
             # Check if we are close to the goal to start looking for the meter
-            if self.distance_to_goal() < 2.5:
+            if self.distance_to_goal() < 2.0:
                 self.get_logger().info("Approaching target area. Searching for parking meter...")
                 self.transition_to(State.METER_SEARCH)
 
