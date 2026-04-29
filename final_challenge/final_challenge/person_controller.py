@@ -6,33 +6,28 @@ import time
 
 from rcl_interfaces.msg import SetParametersResult
 from vs_msgs.msg import ConeLocation
-from ackermann_msgs.msg import AckermannDriveStamped
 from std_msgs.msg import String, Bool
 
 
 class PersonController(Node):
     """
-    Controller that stops the car while a person is detected within a stop distance.
+    Publishes obstacle alert while a person is detected within stop distance.
 
     Subscribes:
         /relative_person : ConeLocation
         /mission_state   : String
 
     Publishes:
-        drive_topic      : AckermannDriveStamped
-        /person_detected : Bool
+        /safety/obstacle_alert : Bool
+        /person_detected       : Bool
     """
 
     def __init__(self):
         super().__init__("person_controller")
-        self.declare_parameter("drive_topic", "/vesc/low_level/input/navigation")
+
         self.declare_parameter("person_timeout", 0.5)
         self.declare_parameter("person_stop_distance", 2.0)
-        self.drive_topic = (
-            self.get_parameter("drive_topic")
-            .get_parameter_value()
-            .string_value
-        )
+
         self.person_timeout = (
             self.get_parameter("person_timeout")
             .get_parameter_value()
@@ -43,11 +38,13 @@ class PersonController(Node):
             .get_parameter_value()
             .double_value
         )
-        self.drive_pub = self.create_publisher(
-            AckermannDriveStamped,
-            self.drive_topic,
+
+        self.obstacle_pub = self.create_publisher(
+            Bool,
+            "/person_obstacle_alert",
             10
         )
+
         self.person_detected_pub = self.create_publisher(
             Bool,
             "/person_detected",
@@ -82,21 +79,13 @@ class PersonController(Node):
         self.current_state = msg.data
 
     def person_callback(self, msg: ConeLocation):
-        """
-        Called whenever homography publishes a person location.
-        Receiving the message means a person was detected.
-        """
-
         self.last_person_time = time.time()
+
         relative_x = msg.x_pos
         relative_y = msg.y_pos
         self.last_person_distance = (relative_x**2 + relative_y**2) ** 0.5
 
     def timer_callback(self):
-        """
-        Stop as long as a person has been detected recently and is close enough.
-        """
-
         person_is_recent = False
 
         if self.last_person_time is not None:
@@ -108,30 +97,22 @@ class PersonController(Node):
             and self.last_person_distance <= self.person_stop_distance
         )
 
+        active_state = self.current_state in [
+            "NAVIGATING",
+            "METER_SEARCH",
+            "PARKING",
+            "STOP_SIGN",
+        ]
+
+        obstacle_detected = person_is_recent and person_is_close and active_state
+
         detected_msg = Bool()
-        detected_msg.data = person_is_recent and person_is_close
+        detected_msg.data = obstacle_detected
         self.person_detected_pub.publish(detected_msg)
 
-        if not person_is_recent:
-            return
-
-        if not person_is_close:
-            return
-
-        # Only stop the car during active mission states.
-        if self.current_state not in ["NAVIGATING", "METER_SEARCH", "PARKING", "STOP_SIGN"]:
-            return
-
-        self.publish_stop_command()
-
-    def publish_stop_command(self):
-        drive_cmd = AckermannDriveStamped()
-        drive_cmd.header.stamp = self.get_clock().now().to_msg()
-        drive_cmd.header.frame_id = "base_link"
-        drive_cmd.drive.speed = 0.0
-        drive_cmd.drive.steering_angle = 0.0
-
-        self.drive_pub.publish(drive_cmd)
+        alert_msg = Bool()
+        alert_msg.data = obstacle_detected
+        self.obstacle_pub.publish(alert_msg)
 
     def parameters_callback(self, params):
         for param in params:

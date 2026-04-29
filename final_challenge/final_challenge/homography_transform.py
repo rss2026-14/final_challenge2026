@@ -53,8 +53,6 @@ class HomographyTransformer(Node):
             ConeLocation, "/relative_parking_meter", 10)
         self.person_pub = self.create_publisher(
             ConeLocation, "/relative_person", 10)
-        self.stop_sign_pub = self.create_publisher(
-            ConeLocation, "/relative_stop_sign", 10)
         self.traffic_light_pub = self.create_publisher(
             ConeLocation, "/relative_traffic_light", 10)
 
@@ -63,9 +61,6 @@ class HomographyTransformer(Node):
 
         self.person_px_sub = self.create_subscription(
             ConeLocationPixel, "/relative_person_px", lambda msg: self.object_detection_callback(msg, self.person_pub, "person"), 1)
-
-        self.stop_sign_px_sub = self.create_subscription(
-            ConeLocationPixel, "/relative_stop_sign_px", lambda msg: self.object_detection_callback(msg, self.stop_sign_pub, "stop_sign"), 1)
 
         self.traffic_light_px_sub = self.create_subscription(
             ConeLocationPixel, "/relative_traffic_light_px", lambda msg: self.object_detection_callback(msg, self.traffic_light_pub, "traffic_light"), 1)

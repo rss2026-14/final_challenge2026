@@ -1,16 +1,16 @@
+#!/usr/bin/env python3
+
 import rclpy
 from rclpy.node import Node
 from enum import Enum
 import math
 import time
-from cv_bridge import CvBridge
-import cv2
-# ROS2 Standard Messages
+
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Twist, PoseStamped
+from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Bool, String
 from ackermann_msgs.msg import AckermannDriveStamped
-
+from vs_msgs.msg import ConeLocation
 
 
 class State(Enum):
@@ -22,143 +22,207 @@ class State(Enum):
     PARKED = 6
     DONE = 7
 
+
 class BoatingExecutive(Node):
     def __init__(self):
-        super().__init__('boating_executive')
+        super().__init__("boating_executive")
 
         self.state = State.WAITING
         self.previous_state = State.WAITING
 
         self.current_pose = None
-
         self.goals = []
         self.current_goal = None
+
         self.park_start_time = 0.0
 
-        # --- Publishers ---
-        # Publish goals to your path planner (e.g., Pure Pursuit)
-        self.goal_pub = self.create_publisher(PoseStamped, '/planner/goal', 10)
-        self.drive_pub = self.create_publisher(AckermannDriveStamped,
-                                               "/vesc/low_level/input/navigation",
-                                               1)
-        # Broadcast our state to the rest of the car
-        self.state_pub = self.create_publisher(String, '/mission_state', 10)
-        self.count = 0
+        # Obstacle flags from separate detector/controller nodes
+        self.traffic_light_obstacle = False
+        self.person_obstacle = False
 
-        # --- Subscribers ---
-        # 1. Real Odometry for localization
-        self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
+        # --------------------
+        # Publishers
+        # --------------------
+        self.goal_pub = self.create_publisher(
+            PoseStamped,
+            "/planner/goal",
+            10
+        )
 
-        # 2. THE INTERRUPT: Listens to your separate red light / pedestrian node
-        # Expecting a True (obstacle) or False (clear)
-        self.create_subscription(Bool, '/safety/obstacle_alert', self.obstacle_callback, 10)
+        self.drive_pub = self.create_publisher(
+            AckermannDriveStamped,
+            "/vesc/low_level/input/navigation",
+            1
+        )
 
-        # 3. Getting the target locations
-        # self.create_subscription(PoseStamped, '/basement_point_publisher', self.goal_callback, 10)
-        self.create_subscription(PoseStamped, '/goal_pose', self.goal_callback, 10)
+        self.state_pub = self.create_publisher(
+            String,
+            "/mission_state",
+            10
+        )
 
-        self.create_subscription(Bool, '/parking_success', self.parking_success_callback, 10)
-        self.park_start_time = 0.0
+        # --------------------
+        # Subscribers
+        # --------------------
+        self.create_subscription(
+            Odometry,
+            "/odom",
+            self.odom_callback,
+            10
+        )
 
-        # Main loop for standard state management
+        self.create_subscription(
+            PoseStamped,
+            "/goal_pose",
+            self.goal_callback,
+            10
+        )
+
+        self.create_subscription(
+            Bool,
+            "/parking_success",
+            self.parking_success_callback,
+            10
+        )
+
+        # Separate obstacle alert topics.
+        # This avoids one detector publishing False and accidentally clearing another detector's True.
+        self.create_subscription(
+            Bool,
+            "/traffic_light_obstacle_alert",
+            self.traffic_light_obstacle_callback,
+            10
+        )
+
+        self.create_subscription(
+            Bool,
+            "/person_obstacle_alert",
+            self.person_obstacle_callback,
+            10
+        )
+
+        # Parking meter location from homography.
+        # When this appears during METER_SEARCH, switch to PARKING.
+        self.create_subscription(
+            ConeLocation,
+            "/relative_parking_meter",
+            self.parking_meter_callback,
+            10
+        )
+
         self.timer = self.create_timer(0.1, self.loop)
 
-    # ==========================================
-    #             THE INTERRUPT
-    # ==========================================
-    def obstacle_callback(self, msg: Bool):
-        """ This triggers instantly when the obstacle node publishes. """
-        is_obstacle_detected = msg.data
+        self.get_logger().info("State Decider Initialized")
 
-        if is_obstacle_detected:
-            # Only interrupt if we are actually moving
-            if self.state in [State.NAVIGATING, State.METER_SEARCH, State.PARKING]:
-                self.get_logger().warn("🔴")
-                self.previous_state = self.state
-                self.state = State.OBSTACLE_PAUSE
-                self.hit_the_brakes()
-
-        else:
-            # If the coast is clear and we are paused, resume
-            if self.state == State.OBSTACLE_PAUSE:
-                self.get_logger().info("🟢")
-                self.state = self.previous_state
+    # ==========================================================
+    # Basic callbacks
+    # ==========================================================
 
     def odom_callback(self, msg: Odometry):
-        # Save the actual position of the robot
         self.current_pose = msg.pose.pose
-
-    def distance_to_goal(self):
-        if not self.current_pose or not self.current_goal:
-            return float('inf')
-
-        dx = self.current_goal.pose.position.x - self.current_pose.position.x
-        dy = self.current_goal.pose.position.y - self.current_pose.position.y
-        return math.sqrt(dx**2 + dy**2)
-
-
-    def parking_success_callback(self, msg: Bool):
-        if msg.data and self.state == State.PARKING:
-            self.get_logger().info("Parking node confirmed success! Waiting 5 seconds...")
-            # SAVE IMAGE
-            # e.g., self.save_bounding_box_image()
-            self.count+=1
-            bridge = CvBridge()
-            # Convert ROS Image message to OpenCV image
-            cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-
-            cv2.imwrite(f'successful_park{self.count}.png', cv_image)
-
-            self.state = State.PARKED
-            self.park_start_time = time.time()
 
     def goal_callback(self, msg: PoseStamped):
         self.goals.append(msg)
 
-        # If we were waiting for a goal to start the mission, get moving!
         if self.state == State.WAITING:
             self.current_goal = self.goals.pop(0)
             self.state = State.NAVIGATING
             self.goal_pub.publish(self.current_goal)
-            self.get_logger().info(f"Goal received! {len(self.goals)} more in queue.")
-    def loop(self):
-        # Broadcast current state so other nodes know what's happening
-        state_msg = String()
-        state_msg.data = self.state.name
-        self.state_pub.publish(state_msg)
 
-        if self.state == State.NAVIGATING:
-            # self.goal_pub.publish(self.current_goal)
+            self.get_logger().info(
+                f"Goal received. Starting navigation. {len(self.goals)} goals left in queue."
+            )
+
+    def parking_success_callback(self, msg: Bool):
+        if msg.data and self.state == State.PARKING:
+            self.get_logger().info("Parking controller confirmed success. Holding for 5 seconds.")
+
+            self.state = State.PARKED
+            self.park_start_time = time.time()
+
+    def parking_meter_callback(self, msg: ConeLocation):
+        if self.state == State.METER_SEARCH:
+            self.get_logger().info(
+                f"Parking meter found at x={msg.x_pos:.2f}, y={msg.y_pos:.2f}. Switching to PARKING."
+            )
+            self.state = State.PARKING
+
+    # ==========================================================
+    # Obstacle callbacks
+    # ==========================================================
+
+    def traffic_light_obstacle_callback(self, msg: Bool):
+        self.traffic_light_obstacle = msg.data
+        self.update_obstacle_state()
+
+    def person_obstacle_callback(self, msg: Bool):
+        self.person_obstacle = msg.data
+        self.update_obstacle_state()
+
+    def update_obstacle_state(self):
+        obstacle_detected = self.traffic_light_obstacle or self.person_obstacle
+
+        if obstacle_detected:
+            if self.state in [State.NAVIGATING, State.METER_SEARCH, State.PARKING]:
+                self.previous_state = self.state
+                self.state = State.OBSTACLE_PAUSE
+                self.get_logger().warn("Obstacle detected. Pausing mission.")
+                self.hit_the_brakes()
+
+        else:
+            if self.state == State.OBSTACLE_PAUSE:
+                self.get_logger().info("Obstacle cleared. Resuming previous state.")
+                self.state = self.previous_state
+
+    # ==========================================================
+    # Main state machine
+    # ==========================================================
+
+    def loop(self):
+        self.publish_state()
+
+        if self.state == State.WAITING:
+            self.hit_the_brakes()
+
+        elif self.state == State.NAVIGATING:
             dist = self.distance_to_goal()
+
             if dist < 2.0:
-                self.get_logger().info(f"Within 2m (Distance: {dist:.2f}). Starting Meter Search!")
+                self.get_logger().info(
+                    f"Within 2m of goal. Distance: {dist:.2f}. Starting meter search."
+                )
                 self.state = State.METER_SEARCH
 
         elif self.state == State.METER_SEARCH:
-            # TODO: Listen to YOLO. Once bounding box is found, switch to State.PARKING
-            # self.state = State.PARKING
+            # Waiting for /relative_parking_meter callback.
+            # The parking_meter_callback switches to PARKING when a meter is detected.
             pass
 
         elif self.state == State.PARKING:
-            # We don't publish cmd_vel here. The ParkingController node takes over.
+            # ParkingController takes over when /mission_state == PARKING.
+            # State decider does not publish motion commands here unless obstacle/pause/success happens.
             pass
 
         elif self.state == State.PARKED:
-            self.hit_the_brakes() # Keep the car locked in place
+            self.hit_the_brakes()
 
             elapsed_time = time.time() - self.park_start_time
-            if elapsed_time >= 5.0:
-                self.get_logger().info("⏰ 5 seconds elapsed!")
 
-                # Check if we have another goal (loc2 or start)
+            if elapsed_time >= 5.0:
+                self.get_logger().info("Finished 5 second parking hold.")
+
                 if len(self.goals) > 0:
                     self.current_goal = self.goals.pop(0)
                     self.state = State.NAVIGATING
                     self.goal_pub.publish(self.current_goal)
-                    self.get_logger().info("Moving to next goal...")
+
+                    self.get_logger().info(
+                        f"Moving to next goal. {len(self.goals)} goals left in queue."
+                    )
+
                 else:
                     self.state = State.DONE
-                    self.get_logger().info("🏁 Course complete! License acquired.")
+                    self.get_logger().info("Course complete.")
 
         elif self.state == State.OBSTACLE_PAUSE:
             self.hit_the_brakes()
@@ -166,16 +230,31 @@ class BoatingExecutive(Node):
         elif self.state == State.DONE:
             self.hit_the_brakes()
 
+    # ==========================================================
+    # Helper functions
+    # ==========================================================
 
-    # TODO: stop the car
+    def publish_state(self):
+        state_msg = String()
+        state_msg.data = self.state.name
+        self.state_pub.publish(state_msg)
+
+    def distance_to_goal(self):
+        if self.current_pose is None or self.current_goal is None:
+            return float("inf")
+
+        dx = self.current_goal.pose.position.x - self.current_pose.position.x
+        dy = self.current_goal.pose.position.y - self.current_pose.position.y
+
+        return math.sqrt(dx**2 + dy**2)
+
     def hit_the_brakes(self):
-        self._publish_drive_command(0.0, 0.0)
+        self.publish_drive_command(0.0, 0.0)
 
-    def _publish_drive_command(self, speed, steering_angle):
-        """ Helper function to construct and publish the Ackermann message. """
+    def publish_drive_command(self, speed, steering_angle):
         drive_cmd = AckermannDriveStamped()
         drive_cmd.header.stamp = self.get_clock().now().to_msg()
-        drive_cmd.header.frame_id = 'base_link'
+        drive_cmd.header.frame_id = "base_link"
         drive_cmd.drive.speed = float(speed)
         drive_cmd.drive.steering_angle = float(steering_angle)
 
@@ -184,10 +263,17 @@ class BoatingExecutive(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = BoatingExecutive()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
 
-if __name__ == '__main__':
+    node = BoatingExecutive()
+
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == "__main__":
     main()
