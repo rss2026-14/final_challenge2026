@@ -39,7 +39,7 @@ class BoatingExecutive(Node):
         # Publish goals to your path planner (e.g., Pure Pursuit)
         self.goal_pub = self.create_publisher(PoseStamped, '/planner/goal', 10)
         self.drive_pub = self.create_publisher(AckermannDriveStamped,
-                                               self.drive_topic,
+                                               "/vesc/low_level/input/navigation",
                                                1)
         # Broadcast our state to the rest of the car
         self.state_pub = self.create_publisher(String, '/mission_state', 10)

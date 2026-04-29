@@ -28,7 +28,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'boating_executive = final_challenge.boating_executive:main',
+            'boating_executive = final_challenge.state_decider:main',
             'parking_meter_controller = final_challenge.parking_meter_controller:main',
             'person_controller = final_challenge.person_controller:main',
             'stop_sign_controller = final_challenge.stop_sign_controller:main',
