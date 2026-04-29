@@ -9,6 +9,8 @@ import cv2
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, PoseStamped
 from std_msgs.msg import Bool, String
+from ackermann_msgs.msg import AckermannDriveStamped
+
 
 
 class State(Enum):
@@ -36,8 +38,9 @@ class BoatingExecutive(Node):
         # --- Publishers ---
         # Publish goals to your path planner (e.g., Pure Pursuit)
         self.goal_pub = self.create_publisher(PoseStamped, '/planner/goal', 10)
-        # Emergency brakes
-        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.drive_pub = self.create_publisher(AckermannDriveStamped,
+                                               self.drive_topic,
+                                               1)
         # Broadcast our state to the rest of the car
         self.state_pub = self.create_publisher(String, '/mission_state', 10)
         self.count = 0
@@ -51,7 +54,8 @@ class BoatingExecutive(Node):
         self.create_subscription(Bool, '/safety/obstacle_alert', self.obstacle_callback, 10)
 
         # 3. Getting the target locations
-        self.create_subscription(PoseStamped, '/basement_point_publisher', self.goal_callback, 10)
+        # self.create_subscription(PoseStamped, '/basement_point_publisher', self.goal_callback, 10)
+        self.create_subscription(PoseStamped, '/clicked_point', self.goal_callback, 10)
 
         self.create_subscription(Bool, '/parking_success', self.parking_success_callback, 10)
         self.park_start_time = 0.0
@@ -102,7 +106,7 @@ class BoatingExecutive(Node):
             bridge = CvBridge()
             # Convert ROS Image message to OpenCV image
             cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-            
+
             cv2.imwrite(f'successful_park{self.count}.png', cv_image)
 
             self.state = State.PARKED
@@ -163,8 +167,17 @@ class BoatingExecutive(Node):
 
     # TODO: stop the car
     def hit_the_brakes(self):
-        stop_msg = Twist()
-        self.cmd_vel_pub.publish(stop_msg)
+        self._publish_drive_command(0.0, 0.0)
+
+    def _publish_drive_command(self, speed, steering_angle):
+        """ Helper function to construct and publish the Ackermann message. """
+        drive_cmd = AckermannDriveStamped()
+        drive_cmd.header.stamp = self.get_clock().now().to_msg()
+        drive_cmd.header.frame_id = 'base_link'
+        drive_cmd.drive.speed = float(speed)
+        drive_cmd.drive.steering_angle = float(steering_angle)
+
+        self.drive_pub.publish(drive_cmd)
 
 
 def main(args=None):
