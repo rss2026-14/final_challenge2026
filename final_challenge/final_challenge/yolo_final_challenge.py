@@ -153,6 +153,7 @@ class YoloAnnotatorNode(Node):
             "parking meter": self.parking_meter_px_pub,
             "person": self.person_px_pub,
             "stop sign": self.stop_sign_px_pub,
+            "traffic light": self.traffic_light_px_pub,
         }
 
         for class_name, publisher in class_to_pub.items():
