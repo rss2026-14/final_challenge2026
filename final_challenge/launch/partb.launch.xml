@@ -19,15 +19,15 @@
         <param from="$(find-pkg-share path_planning)/config/real/config.yaml"/>
     </node>
 
-    <node pkg="visual_servoing" name="parking_controller" exec="parking_controller" output="screen">
+    <node pkg="final_challenge" name="parking_meter" exec="parking_meter" output="screen">
         <param name="drive_topic" value="/vesc/low_level/input/navigation" />
     </node>
 <!--
     PARKING METER YOLO DETECTOR PIXEL PUBLISH THING
     <node pkg="visual_servoing" name="cone_detector" exec="cone_detector" output="screen">
     </node>  -->
-
+<!--
     <node pkg="visual_servoing" name="homography_transformer" exec="homography_transformer" output="screen">
-    </node>
+    </node> -->
 
     </launch>
