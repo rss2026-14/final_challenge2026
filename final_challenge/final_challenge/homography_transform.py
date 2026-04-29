@@ -48,6 +48,27 @@ class HomographyTransformer(Node):
         self.track_pub = self.create_publisher(ConeLocation, "/relative_track", 10)
         self.marker_pub = self.create_publisher(Marker, "/track_marker", 1)
         self.track_px_sub = self.create_subscription(ConeLocationPixel, "/relative_track_px", self.track_detection_callback, 1)
+        
+        self.parking_meter_pub = self.create_publisher(
+            ConeLocation, "/relative_parking_meter", 10)
+        self.person_pub = self.create_publisher(
+            ConeLocation, "/relative_person", 10)
+        self.stop_sign_pub = self.create_publisher(
+            ConeLocation, "/relative_stop_sign", 10)
+        self.traffic_light_pub = self.create_publisher(
+            ConeLocation, "/relative_traffic_light", 10)
+
+        self.parking_meter_px_sub = self.create_subscription(
+            ConeLocationPixel, "/relative_parking_meter_px", lambda msg: self.object_detection_callback(msg, self.parking_meter_pub, "parking_meter"), 1)
+
+        self.person_px_sub = self.create_subscription(
+            ConeLocationPixel, "/relative_person_px", lambda msg: self.object_detection_callback(msg, self.person_pub, "person"), 1)
+
+        self.stop_sign_px_sub = self.create_subscription(
+            ConeLocationPixel, "/relative_stop_sign_px", lambda msg: self.object_detection_callback(msg, self.stop_sign_pub, "stop_sign"), 1)
+
+        self.traffic_light_px_sub = self.create_subscription(
+            ConeLocationPixel, "/relative_traffic_light_px", lambda msg: self.object_detection_callback(msg, self.traffic_light_pub, "traffic_light"), 1)
 
         if not len(PTS_GROUND_PLANE) == len(PTS_IMAGE_PLANE):
             rclpy.logerr("ERROR: PTS_GROUND_PLANE and PTS_IMAGE_PLANE should be of same length")
@@ -104,6 +125,20 @@ class HomographyTransformer(Node):
         self.track_pub.publish(relative_xy_msg)
         self.draw_marker(x,y, "zed_camera_link")
 
+    def object_detection_callback(self, msg, publisher, object_name):
+        x, y = self.transformUvToXy(msg.u, msg.v)
+
+        relative_xy_msg = ConeLocation()
+        relative_xy_msg.x_pos = x
+        relative_xy_msg.y_pos = y
+
+        publisher.publish(relative_xy_msg)
+        self.draw_marker(x, y, "zed_camera_link")
+
+        self.get_logger().info(
+            f"{object_name} relative location: x={x:.2f}, y={y:.2f}"
+        )
+
     def transformUvToXy(self, u, v):
         """
         u and v are pixel coordinates.
@@ -123,8 +158,6 @@ class HomographyTransformer(Node):
         homogeneous_xy = xy * scaling_factor
         x = homogeneous_xy[0, 0]
         y = homogeneous_xy[1, 0]
-        self.get_logger().info(f"Mouse click received")
-        self.draw_marker(x,y,"zed_camera_link")
         return x, y
 
     def draw_marker(self, track_x, track_y, message_frame):

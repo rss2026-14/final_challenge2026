@@ -39,7 +39,7 @@ class ParkingController(Node):
         self.success_pub = self.create_publisher(Bool, "/parking_success", 10)
 
         self.create_subscription(
-            ConeLocation, "/relative_cone", self.relative_callback, 1)
+            ConeLocation, "/relative_parking_meter", self.relative_callback, 1)
 
         self.current_state = "WAITING"
         self.create_subscription(String, "/mission_state", self.state_callback, 10)
