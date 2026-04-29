@@ -3,7 +3,8 @@ from rclpy.node import Node
 from enum import Enum
 import math
 import time
-
+from cv_bridge import CvBridge
+import cv2
 # ROS2 Standard Messages
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, PoseStamped
@@ -39,6 +40,7 @@ class BoatingExecutive(Node):
         self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         # Broadcast our state to the rest of the car
         self.state_pub = self.create_publisher(String, '/mission_state', 10)
+        self.count = 0
 
         # --- Subscribers ---
         # 1. Real Odometry for localization
@@ -96,6 +98,12 @@ class BoatingExecutive(Node):
             self.get_logger().info("Parking node confirmed success! Waiting 5 seconds...")
             # SAVE IMAGE
             # e.g., self.save_bounding_box_image()
+            self.count+=1
+            bridge = CvBridge()
+            # Convert ROS Image message to OpenCV image
+            cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            
+            cv2.imwrite(f'successful_park{self.count}.png', cv_image)
 
             self.state = State.PARKED
             self.park_start_time = time.time()
