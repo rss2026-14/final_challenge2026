@@ -101,11 +101,13 @@ class BoatingExecutive(Node):
             self.park_start_time = time.time()
 
     def goal_callback(self, msg: PoseStamped):
-        if self.state == State.WAITING:
-            self.current_goal = msg
-            self.state = State.NAVIGATING
-            self.get_logger().info("Goal received")
+        self.goals.append(msg)
 
+        # If we were waiting for a goal to start the mission, get moving!
+        if self.state == State.WAITING:
+            self.current_goal = self.goals.pop(0)
+            self.state = State.NAVIGATING
+            self.get_logger().info(f"Goal received! {len(self.goals)} more in queue.")
     def loop(self):
         # Broadcast current state so other nodes know what's happening
         state_msg = String()
@@ -113,21 +115,41 @@ class BoatingExecutive(Node):
         self.state_pub.publish(state_msg)
 
         if self.state == State.NAVIGATING:
-            # 1. Keep telling the path planner where to go
             self.goal_pub.publish(self.current_goal)
-
-            # 2. Check Odometry distance to see if we arrived
             dist = self.distance_to_goal()
-            if dist < 2.0: # Close enough to the point!
+            if dist < 2.0:
                 self.get_logger().info(f"Within 2m (Distance: {dist:.2f}). Starting Meter Search!")
                 self.state = State.METER_SEARCH
 
         elif self.state == State.METER_SEARCH:
-            # checking for the YOLO parking meter flag
+            # TODO: Listen to YOLO. Once bounding box is found, switch to State.PARKING
+            # self.state = State.PARKING
             pass
 
+        elif self.state == State.PARKING:
+            # We don't publish cmd_vel here. The ParkingController node takes over.
+            pass
+
+        elif self.state == State.PARKED:
+            self.hit_the_brakes() # Keep the car locked in place
+
+            elapsed_time = time.time() - self.park_start_time
+            if elapsed_time >= 5.0:
+                self.get_logger().info("⏰ 5 seconds elapsed!")
+
+                # Check if we have another goal (loc2 or start)
+                if len(self.goals) > 0:
+                    self.current_goal = self.goals.pop(0)
+                    self.state = State.NAVIGATING
+                    self.get_logger().info("Moving to next goal...")
+                else:
+                    self.state = State.DONE
+                    self.get_logger().info("🏁 Course complete! License acquired.")
+
         elif self.state == State.OBSTACLE_PAUSE:
-            # Continuously spam the brakes just to be safe
+            self.hit_the_brakes()
+
+        elif self.state == State.DONE:
             self.hit_the_brakes()
 
 
