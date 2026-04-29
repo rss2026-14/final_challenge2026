@@ -19,7 +19,7 @@
         <param from="$(find-pkg-share path_planning)/config/real/config.yaml"/>
     </node>
 
-    <node pkg="final_challenge" name="parking_meter" exec="parking_meter" output="screen">
+    <node pkg="final_challenge" name="parking_meter_controller" exec="parking_meter_controller" output="screen">
         <param name="drive_topic" value="/vesc/low_level/input/navigation" />
     </node>
 <!--
