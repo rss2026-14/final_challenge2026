@@ -1,9 +1,8 @@
 import numpy as np
 import cv2
 import math as m
-
-
-img=cv2.imread('../racetrack_images/lane_3/image35.png')
+from sympy import Point, Line
+img=cv2.imread('../../racetrack_images/lane_3/image16.png')
 h, w = img.shape[:2]
 
 # Create black mask
@@ -31,30 +30,38 @@ edges = cv2.Canny(gray, 100, 180)
 lines = cv2.HoughLinesP(edges, 1, np.pi/180, 68, minLineLength=80, maxLineGap=20)
 
 # only save lines with angle > 15 degrees
+Xs=[]
 linemask=[]
-for line in lines:
-    x1, y1, x2, y2 = line[0]
-    angle=m.atan(abs((y2-y1)/(x2-x1)))
-    if angle>(15*m.pi/180):
-        linemask.append(line)
+if lines is not None:
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        angle=m.atan(abs((y2-y1)/(x2-x1)))
+        if angle>(15*m.pi/180):
+            linemask.append(line)
+            Xs.append(x1)
+            Xs.append(x2)
 
-# find and publish drive point from end of lines
-X=[]
-Y=[]
-for line in linemask:
-    x1, y1, x2, y2 = line[0]
-    if y1<y2:
-        X.extend([x1])
-        Y.extend([y1])
-    elif y2<y1:
-        X.extend([x2])
-        Y.extend([y2])
-    cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), 3)
+# find left and right lanes
+if linemask is not None:
+    left=None
+    right=None
+    lanes=[]
+    for line in linemask:
+        x1, y1, x2, y2 = line[0]
+        if (x1==min(Xs) or x2==min(Xs)) and left is None:
+            left=Line(Point(x1,y1),Point(x2,y2))
+            lanes.append(line)
+            cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), 3)
+        if (x1==max(Xs) or x2==max(Xs)) and right is None:
+            right=Line(Point(x1,y1),Point(x2,y2))
+            lanes.append(line)
+            cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), 3)
 
-if X:
-    px=int(np.average(X))
-    py=int(np.average(Y))
-    cv2.circle(img, (px, py), 5, (0, 0, 255), -1)
+    intersection=left.intersection(right)
+    if intersection:
+        print(intersection[0].evalf())
+        px,py=intersection[0].evalf()
+        cv2.circle(img, (int(px), int(py)), 5, (0, 0, 255), -1)
 
 colormasked = cv2.cvtColor(colormasked, cv2.COLOR_HSV2RGB)
 cv2.imshow("Image", img)

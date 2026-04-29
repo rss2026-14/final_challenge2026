@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import math as m
-
+from sympy import Point, Line
 #################### X-Y CONVENTIONS #########################
 # 0,0  X  > > > > >
 #
@@ -51,34 +51,36 @@ def cd_color_segmentation(img):
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, 68, minLineLength=80, maxLineGap=20)
 
     # only save lines with angle > 15 degrees
+    Xs=[]
     linemask=[]
     if lines is None:
         return None
-
     for line in lines:
         x1, y1, x2, y2 = line[0]
         angle=m.atan(abs((y2-y1)/(x2-x1)))
         if angle>(15*m.pi/180):
             linemask.append(line)
+            Xs.append(x1)
+            Xs.append(x2)
 
-    # find and publish drive point from end of lines
-    X=[]
-    Y=[]
+    # find left and right lanes
     if linemask is None:
         return None
-
+    left=None
+    right=None
+    lanes=[]
     for line in linemask:
         x1, y1, x2, y2 = line[0]
-        if y1<y2:
-            X.extend([x1])
-            Y.extend([y1])
-        elif y2<y1:
-            X.extend([x2])
-            Y.extend([y2])
+        if (x1==min(Xs) or x2==min(Xs)) and left is None:
+            left=Line(Point(x1,y1),Point(x2,y2))
+            lanes.append(line)
+        if (x1==max(Xs) or x2==max(Xs)) and right is None:
+            right=Line(Point(x1,y1),Point(x2,y2))
+            lanes.append(line)
 
-    if X:
-        px=int(np.average(X))
-        py=int(np.average(Y))
-        return (px,py,linemask)
-
-    return None  # No point found
+    if left is not None and right is not None:
+        intersection=left.intersection(right)
+        if intersection:
+            px,py=intersection[0].evalf()
+            return px,py,lanes
+    return None
