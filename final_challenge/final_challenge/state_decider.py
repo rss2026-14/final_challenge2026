@@ -3,11 +3,14 @@ from rclpy.node import Node
 from enum import Enum
 import math
 import time
-
+from cv_bridge import CvBridge
+import cv2
 # ROS2 Standard Messages
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, PoseStamped
 from std_msgs.msg import Bool, String
+from ackermann_msgs.msg import AckermannDriveStamped
+
 
 
 class State(Enum):
@@ -35,10 +38,12 @@ class BoatingExecutive(Node):
         # --- Publishers ---
         # Publish goals to your path planner (e.g., Pure Pursuit)
         self.goal_pub = self.create_publisher(PoseStamped, '/planner/goal', 10)
-        # Emergency brakes
-        self.cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.drive_pub = self.create_publisher(AckermannDriveStamped,
+                                               "/vesc/low_level/input/navigation",
+                                               1)
         # Broadcast our state to the rest of the car
         self.state_pub = self.create_publisher(String, '/mission_state', 10)
+        self.count = 0
 
         # --- Subscribers ---
         # 1. Real Odometry for localization
@@ -49,7 +54,8 @@ class BoatingExecutive(Node):
         self.create_subscription(Bool, '/safety/obstacle_alert', self.obstacle_callback, 10)
 
         # 3. Getting the target locations
-        self.create_subscription(PoseStamped, '/basement_point_publisher', self.goal_callback, 10)
+        # self.create_subscription(PoseStamped, '/basement_point_publisher', self.goal_callback, 10)
+        self.create_subscription(PoseStamped, '/goal_pose', self.goal_callback, 10)
 
         self.create_subscription(Bool, '/parking_success', self.parking_success_callback, 10)
         self.park_start_time = 0.0
@@ -96,6 +102,12 @@ class BoatingExecutive(Node):
             self.get_logger().info("Parking node confirmed success! Waiting 5 seconds...")
             # SAVE IMAGE
             # e.g., self.save_bounding_box_image()
+            self.count+=1
+            bridge = CvBridge()
+            # Convert ROS Image message to OpenCV image
+            cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+
+            cv2.imwrite(f'successful_park{self.count}.png', cv_image)
 
             self.state = State.PARKED
             self.park_start_time = time.time()
@@ -107,6 +119,7 @@ class BoatingExecutive(Node):
         if self.state == State.WAITING:
             self.current_goal = self.goals.pop(0)
             self.state = State.NAVIGATING
+            self.goal_pub.publish(self.current_goal)
             self.get_logger().info(f"Goal received! {len(self.goals)} more in queue.")
     def loop(self):
         # Broadcast current state so other nodes know what's happening
@@ -115,7 +128,7 @@ class BoatingExecutive(Node):
         self.state_pub.publish(state_msg)
 
         if self.state == State.NAVIGATING:
-            self.goal_pub.publish(self.current_goal)
+            # self.goal_pub.publish(self.current_goal)
             dist = self.distance_to_goal()
             if dist < 2.0:
                 self.get_logger().info(f"Within 2m (Distance: {dist:.2f}). Starting Meter Search!")
@@ -141,6 +154,7 @@ class BoatingExecutive(Node):
                 if len(self.goals) > 0:
                     self.current_goal = self.goals.pop(0)
                     self.state = State.NAVIGATING
+                    self.goal_pub.publish(self.current_goal)
                     self.get_logger().info("Moving to next goal...")
                 else:
                     self.state = State.DONE
@@ -155,8 +169,17 @@ class BoatingExecutive(Node):
 
     # TODO: stop the car
     def hit_the_brakes(self):
-        stop_msg = Twist()
-        self.cmd_vel_pub.publish(stop_msg)
+        self._publish_drive_command(0.0, 0.0)
+
+    def _publish_drive_command(self, speed, steering_angle):
+        """ Helper function to construct and publish the Ackermann message. """
+        drive_cmd = AckermannDriveStamped()
+        drive_cmd.header.stamp = self.get_clock().now().to_msg()
+        drive_cmd.header.frame_id = 'base_link'
+        drive_cmd.drive.speed = float(speed)
+        drive_cmd.drive.steering_angle = float(steering_angle)
+
+        self.drive_pub.publish(drive_cmd)
 
 
 def main(args=None):

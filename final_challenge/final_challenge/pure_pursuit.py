@@ -28,10 +28,9 @@ class PurePursuit(Node):
         self.odom_topic = self.get_parameter('odom_topic').value
         self.drive_topic = self.get_parameter('drive_topic').value
 
-        self.wheelbase_length = 0.25 #in meters
-
-        self.base_speed = 2.0  #m/s
-        self.min_speed = 1.0
+        self.wheelbase_length = 0.33 #in meters
+        self.lookahead = 1.0
+        self.base_speed = 2.0 
 
         self.target_point = None
 
@@ -53,11 +52,12 @@ class PurePursuit(Node):
 
         if self.target_point is None:
             self.target_point = track_point
+        #smoothing
         else:
             self.target_point = (
                 self.alpha * self.target_point[0] + (1 - self.alpha) * track_point[0],
                 self.alpha * self.target_point[1] + (1 - self.alpha) * track_point[1]
-            ) #???
+            ) 
 
     def pose_callback(self, odometry_msg):
         """
@@ -70,37 +70,50 @@ class PurePursuit(Node):
 
         target_x, target_y = self.target_point
 
-        if target_x <= 0.05:
-            self.get_logger().warn("Target too close or behind. Stopping.")
-            self._publish_drive_command(0.0, 0.0)
-            return
+        dist = np.sqrt(target_x**2 + target_y**2)
 
-        if target_x < 0.3:
-            target_x = 0.3
+        # if dist < 1e-6:
+        #     self._publish_drive_command(0.0, 0.0)
+        #     return
 
-        L2 = target_x**2 + target_y**2 #squaring distance?
+        # if target_x <= 0.05:
+        #     self.get_logger().warn("Target too close or behind. Stopping.")
+        #     self._publish_drive_command(0.0, 0.0)
+        #     return
 
-        if L2 < 1e-6:
-            self._publish_drive_command(0.0, 0.0)
-            return
+        min_dist = 0.3
 
-        steering_angle = np.arctan2(2.0 * self.wheelbase_length * target_y, L2)
+        if dist < min_dist:
+            scale = min_dist / dist
+            target_x *= scale
+            target_y *= scale
+
+        # if target_x < 0.3:
+        #     target_x = 0.3
+
+        actual_lookahead_sq = target_x**2 + target_y**2
+
+        if actual_lookahead_sq > 0:
+            steering_angle = np.arctan2(2.0 * self.wheelbase_length * target_y, actual_lookahead_sq)
+        else:
+            steering_angle = 0.0
+
         steering_angle = np.clip(steering_angle, -0.34, 0.34)
 
-        self._publish_drive_command(steering_angle)
+        self._publish_drive_command(self.base_speed, float(steering_angle))
 
     def _publish_drive_command(self, speed, steering_angle):
         """
         Publish Ackermann command.
         """
+
         drive_cmd = AckermannDriveStamped()
         drive_cmd.header.stamp = self.get_clock().now().to_msg()
         drive_cmd.header.frame_id = 'base_link'
-
         drive_cmd.drive.speed = float(speed)
         drive_cmd.drive.steering_angle = float(steering_angle)
 
-        self.drive_pub.publish(self.base_speed, drive_cmd)
+        self.drive_pub.publish(drive_cmd)
 
 
 def main(args=None):
