@@ -64,8 +64,11 @@ class TrafficLightController(Node):
         self.current_state = msg.data
 
     def red_callback(self, msg: Bool):
+        self.get_logger().info(f"Traffic light red message received: red={msg.data}")
+
         if msg.data:
             self.last_red_time = time.time()
+            self.get_logger().info("Updated last_red_time because red=True")
 
     def timer_callback(self):
         red_is_recent = False
@@ -83,6 +86,13 @@ class TrafficLightController(Node):
 
         alert_msg = Bool()
         alert_msg.data = red_is_recent and active_state
+        self.get_logger().info(
+            f"Traffic light controller debug: "
+            f"state={self.current_state}, "
+            f"red_recent={red_is_recent}, "
+            f"active_state={active_state}, "
+            f"alert={alert_msg.data}"
+        )
         self.obstacle_pub.publish(alert_msg)
 
     def parameters_callback(self, params):

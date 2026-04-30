@@ -65,7 +65,9 @@ class TrafficLightColorDetector(Node):
         except Exception as e:
             self.get_logger().error(f"cv_bridge conversion failed: {e}")
             return
-
+        self.get_logger().info(
+            f"Traffic light crop received: width={bgr.shape[1]}, height={bgr.shape[0]}"
+        )
         is_red = self.is_red_light(bgr)
 
         out_msg = Bool()
@@ -111,10 +113,23 @@ class TrafficLightColorDetector(Node):
         if contours:
             max_area = max(cv2.contourArea(c) for c in contours)
 
-        return (
+        is_red = (
             red_ratio >= self.red_pixel_ratio_threshold
             and max_area >= self.min_red_area
         )
+
+        self.get_logger().info(
+            f"Traffic light color debug: "
+            f"red_pixels={red_pixels}, "
+            f"total_pixels={total_pixels}, "
+            f"red_ratio={red_ratio:.4f}, "
+            f"ratio_threshold={self.red_pixel_ratio_threshold:.4f}, "
+            f"max_red_area={max_area:.1f}, "
+            f"min_red_area={self.min_red_area}, "
+            f"is_red={is_red}"
+        )
+
+        return is_red
 
     def parameters_callback(self, params):
         for param in params:

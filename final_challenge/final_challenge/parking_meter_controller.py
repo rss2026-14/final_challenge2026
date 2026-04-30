@@ -67,6 +67,14 @@ class ParkingController(Node):
         angle = np.arctan2(self.relative_y, self.relative_x)
         current_distance = np.sqrt(self.relative_x**2 + self.relative_y**2)
         distance_error = current_distance - self.parking_distance
+        
+        self.get_logger().info(
+            f"Parking meter distance={current_distance:.3f} m, "
+            f"x={self.relative_x:.3f} m, "
+            f"y={self.relative_y:.3f} m, "
+            f"target={self.parking_distance:.3f} m, "
+            f"error={distance_error:.3f} m"
+        )
 
         if abs(distance_error) < self.distance_sensitivity:
             if abs(angle) < self.reverse_range:

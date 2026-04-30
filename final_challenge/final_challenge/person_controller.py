@@ -84,6 +84,13 @@ class PersonController(Node):
         relative_x = msg.x_pos
         relative_y = msg.y_pos
         self.last_person_distance = (relative_x**2 + relative_y**2) ** 0.5
+        self.get_logger().info(
+            f"Person received: "
+            f"x={relative_x:.3f} m, "
+            f"y={relative_y:.3f} m, "
+            f"distance={self.last_person_distance:.3f} m, "
+            f"stop_distance={self.person_stop_distance:.3f} m"
+        )
 
     def timer_callback(self):
         person_is_recent = False
@@ -105,6 +112,15 @@ class PersonController(Node):
         ]
 
         obstacle_detected = person_is_recent and person_is_close and active_state
+        self.get_logger().info(
+            f"Person debug: "
+            f"state={self.current_state}, "
+            f"recent={person_is_recent}, "
+            f"close={person_is_close}, "
+            f"active_state={active_state}, "
+            f"distance={self.last_person_distance}, "
+            f"alert={obstacle_detected}"
+        )
 
         detected_msg = Bool()
         detected_msg.data = obstacle_detected
