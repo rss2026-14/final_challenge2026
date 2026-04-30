@@ -33,7 +33,7 @@ setup(
             'person_controller = final_challenge.person_controller:main',
             'traffic_light_controller = final_challenge.traffic_light_controller:main',
             'traffic_light_color_detector = final_challenge.traffic_light_color_detector:main',
-
+            'yolo_final_challenge = final_challenge.yolo_final_challenge:main',
         ],
     },
 )

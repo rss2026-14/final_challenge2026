@@ -266,6 +266,24 @@ class YoloAnnotatorNode(Node):
                 )
             )
         return detections
+    def draw_homography_point(self, image, det):
+        u = (det.x1 + det.x2) // 2
+        v = det.y2
+
+        cv2.circle(image, (u, v), 7, (0, 0, 255), -1)
+
+        cv2.line(image, (det.x1, v), (det.x2, v), (0, 0, 255), 2)
+        cv2.line(image, (u, det.y1), (u, det.y2), (0, 0, 255), 2)
+
+        cv2.putText(
+            image,
+            f"H px=({u},{v})",
+            (u + 10, max(v - 10, 20)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            (0, 0, 255),
+            2
+        )
 
     def draw_detections(
         self,
@@ -293,7 +311,8 @@ class YoloAnnotatorNode(Node):
 
             # Get color for this class, or use a default color if not found
             color = self.class_color_map.get(det.class_name, (255, 255, 255))
-
+            
+            self.draw_homography_point(out_image, det)
             # Draw bounding box
             cv2.rectangle(
                 out_image,
