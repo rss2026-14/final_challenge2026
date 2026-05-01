@@ -24,7 +24,21 @@ from vs_msgs.msg import ConeLocation, ConeLocationPixel
 PTS_IMAGE_PLANE = [[315, 200],
                    [175,233],
                    [496,200],
-                   [334,146]]  # dummy points
+                   [334,146],
+                   [410, 262],
+                   [331, 270],
+                   [382, 234],
+                   [360, 234],
+                   [348, 185],
+                   [330, 155],
+                   [371, 157],
+                   [315, 155],
+                   [459, 231],
+                   [268, 234],
+                   [288, 177],
+                   [408, 178],
+                   [406, 162],
+                   [281, 165]]  # dummy points
 ######################################################
 
 # PTS_GROUND_PLANE units are in inches
@@ -35,11 +49,24 @@ PTS_IMAGE_PLANE = [[315, 200],
 PTS_GROUND_PLANE = [[35,5],
                     [19,15.5],
                     [38,-18],
-                    [192,0]]  # dummy points
+                    [192,0],
+                    [14, -2],
+                    [13,  3],
+                    [20, -1],
+                    [20, 0],
+                    [48.5, 0],
+                    [120,  0],
+                    [120, -10],
+                    [120, 10],
+                    [20, -8],
+                    [20, 8],
+                    [60, 12],
+                    [60, -12],
+                    [90, -18],
+                    [90, 18]]  # dummy points
 ######################################################
 
 METERS_PER_INCH = 0.0254
-
 
 class HomographyTransformer(Node):
     def __init__(self):
@@ -48,7 +75,7 @@ class HomographyTransformer(Node):
         self.track_pub = self.create_publisher(ConeLocation, "/relative_track", 10)
         self.marker_pub = self.create_publisher(Marker, "/track_marker", 1)
         self.track_px_sub = self.create_subscription(ConeLocationPixel, "/relative_track_px", self.track_detection_callback, 1)
-        
+
         self.parking_meter_pub = self.create_publisher(
             ConeLocation, "/relative_parking_meter", 10)
         self.person_pub = self.create_publisher(

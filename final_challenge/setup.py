@@ -37,7 +37,6 @@ setup(
             'homography_transform = final_challenge.homography_transform:main',
             'pure_pursuit = final_challenge.pure_pursuit:main',
             'track_detector = final_challenge.track_detector:main',
-
         ],
     },
 )
