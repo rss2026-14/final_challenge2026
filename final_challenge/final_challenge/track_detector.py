@@ -59,22 +59,21 @@ class TrackDetector(Node):
         track_px_msg = ConeLocationPixel()
 
         if drive_point is not None:
-            # Extract bounding box coordinates from the tuple of tuples format
-            x,y,lines = drive_point
+            x, y, lines = drive_point
 
-            # Fill the message
+            x = int(x)
+            y = int(y)
+
             track_px_msg.u = float(x)
             track_px_msg.v = float(y)
 
-            # Draw debug visualization
-            # Draw point
             cv2.circle(image, (x, y), 5, (0, 0, 255), -1)
-            # Draw lines
+
             for line in lines:
                 x1, y1, x2, y2 = line[0]
                 cv2.line(image, (x1, y1), (x2, y2), (255, 0, 0), 3)
 
-            self.get_logger().info(f"Detected track at pixel: ({x}, {y})")
+            self.get_logger().info(f"Detected lane-center target at pixel: ({x}, {y})")
         else:
             # No track detected, publish sentinel values
             track_px_msg.u = -1.0

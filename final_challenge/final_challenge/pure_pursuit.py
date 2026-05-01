@@ -22,8 +22,8 @@ class PurePursuit(Node):
     def __init__(self):
         super().__init__("pure_pursuit_point_follower")
 
-        self.declare_parameter('odom_topic', "/odom")
-        self.declare_parameter('drive_topic', "/drive")
+        self.declare_parameter('odom_topic', "/vesc/odom")
+        self.declare_parameter('drive_topic', "/vesc/input/navigation")
 
         self.odom_topic = self.get_parameter('odom_topic').value
         self.drive_topic = self.get_parameter('drive_topic').value
@@ -48,6 +48,11 @@ class PurePursuit(Node):
         Receives (x, y) in vehicle frame from homography.
         Applies smoothing to reduce jitter.
         """
+        if msg.x_pos <= 0.05:
+            self.get_logger().warn(
+                f"Ignoring invalid/behind target: x={msg.x_pos:.2f}, y={msg.y_pos:.2f}"
+            )
+            return
         track_point = (msg.x_pos, msg.y_pos)
 
         if self.target_point is None:
