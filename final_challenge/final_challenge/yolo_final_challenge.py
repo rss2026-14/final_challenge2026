@@ -37,12 +37,12 @@ class YoloAnnotatorNode(Node):
             .string_value
         )
         self.conf_threshold = (
-            self.declare_parameter("conf_threshold", 0.2)
+            self.declare_parameter("conf_threshold", 0.5)
             .get_parameter_value()
             .double_value
         )
         self.iou_threshold = (
-            self.declare_parameter("iou_threshold", 0.7)
+            self.declare_parameter("iou_threshold", 0.5)
             .get_parameter_value()
             .double_value
         )
