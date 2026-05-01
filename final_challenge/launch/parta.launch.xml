@@ -1,0 +1,15 @@
+<launch>
+    <node pkg="lab03" exec="safety_stop" name="safety_stop" output="screen">
+        <param from="$(find-pkg-share path_planning)/config/real/config.yaml"/>
+    </node>
+
+    <node pkg="final_challenge" name="track_detector" exec="track_detector" output="screen">
+    </node>
+
+    <node pkg="final_challenge" name="homography_transform" exec="homography_transform" output="screen">
+    </node>
+
+    <node pkg="final_challenge" name="pure_pursuit" exec="pure_pursuit" output="screen">
+    </node>
+
+    </launch>
