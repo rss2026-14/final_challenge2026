@@ -35,6 +35,9 @@ setup(
             'traffic_light_color_detector = final_challenge.traffic_light_color_detector:main',
             'yolo_final_challenge = final_challenge.yolo_final_challenge:main',
             'homography_transform = final_challenge.homography_transform:main',
+            'pure_pursuit = final_challenge.pure_pursuit:main',
+            'track_detector = final_challenge.track_detector:main',
+
         ],
     },
 )

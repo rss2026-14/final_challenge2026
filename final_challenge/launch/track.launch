@@ -1,0 +1,12 @@
+<launch>
+    <node pkg="final_challenge" exec="track_detector" name="track_detector" output="screen">
+    </node>
+
+    <node pkg="final_challenge" exec="homography_transform" name="homography_transformer" output="screen">
+    </node>
+
+    <node pkg="final_challenge" exec="pure_pursuit" name="pure_pursuit_point_follower" output="screen">
+        <param name="odom_topic" value="/vesc/odom"/>
+        <param name="drive_topic" value="/vesc/input/navigation"/>
+    </node>
+</launch>
