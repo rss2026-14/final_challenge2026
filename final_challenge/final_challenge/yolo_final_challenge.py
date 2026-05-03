@@ -75,10 +75,10 @@ class YoloAnnotatorNode(Node):
 
         self.parking_meter_px_pub = self.create_publisher(
             ConeLocationPixel, "/relative_parking_meter_px", 10)
-            
+
         self.person_px_pub = self.create_publisher(
             ConeLocationPixel, "/relative_person_px", 10)
-        
+
         self.traffic_light_px_pub = self.create_publisher(
             ConeLocationPixel, "/relative_traffic_light_px", 10)
 
@@ -127,12 +127,12 @@ class YoloAnnotatorNode(Node):
 
         # Convert results to Detection List
         dets = self.results_to_detections(results[0])
-        
+
         self.publish_traffic_light_crop(bgr, dets, msg.header)
-        
+
         #publish bottom pixel
         self.publish_detected_object_px(dets)
-        
+
         # Publish detected object name
         self.publish_detected_object(dets)
 
@@ -143,7 +143,7 @@ class YoloAnnotatorNode(Node):
         out_msg = self.bridge.cv2_to_imgmsg(annotated, encoding="bgr8")
         out_msg.header = msg.header
         self.pub.publish(out_msg)
-        
+
     def publish_detected_object_px(self, detections: List[Detection]) -> None:
         class_to_pub = {
             "parking meter": self.parking_meter_px_pub,
@@ -311,7 +311,7 @@ class YoloAnnotatorNode(Node):
 
             # Get color for this class, or use a default color if not found
             color = self.class_color_map.get(det.class_name, (255, 255, 255))
-            
+
             self.draw_homography_point(out_image, det)
             # Draw bounding box
             cv2.rectangle(
@@ -348,4 +348,3 @@ def main() -> None:
     finally:
         node.destroy_node()
         rclpy.shutdown()
-
