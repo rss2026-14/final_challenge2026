@@ -12,7 +12,7 @@ from rcl_interfaces.msg import SetParametersResult
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Point #geometry_msgs not in CMake file
 from vs_msgs.msg import ConeLocationPixel
-from track_segmentation import cd_color_segmentation
+from final_challenge.track_segmentation import cd_color_segmentation
 
 class TrackDetector(Node):
     """
@@ -57,7 +57,7 @@ class TrackDetector(Node):
 
         # Create message to publish
         track_px_msg = ConeLocationPixel()
-
+        h, w = image.shape[:2]
         if drive_point is not None:
             x, y, lines = drive_point
 

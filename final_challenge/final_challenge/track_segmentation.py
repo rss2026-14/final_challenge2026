@@ -48,10 +48,10 @@ def cd_color_segmentation(img):
 
     # Trapezoid ROI: removes lots of irrelevant upper-image detections
     polygon = np.array([[
-        (int(0.10 * w), int(0.95 * h)),
-        (int(0.35 * w), int(0.45 * h)),
-        (int(0.65 * w), int(0.45 * h)),
-        (int(0.90 * w), int(0.95 * h)),
+        (int(0.0 * w), int(0.95 * h)),
+        (int(0.0 * w), int(0.45 * h)),
+        (int(1.0 * w), int(0.45 * h)),
+        (int(1.0 * w), int(0.95 * h)),
     ]], dtype=np.int32)
 
     cv2.fillPoly(roi_mask, polygon, 255)
@@ -76,7 +76,7 @@ def cd_color_segmentation(img):
         rho=1,
         theta=np.pi / 180,
         threshold=45,
-        minLineLength=60,
+        minLineLength=30,
         maxLineGap=25
     )
 
@@ -90,13 +90,13 @@ def cd_color_segmentation(img):
     image_center_x = w / 2.0
 
     # Pick a row to aim at. Larger y is closer to the robot.
-    y_target = int(0.70 * h)
+    y_target = int(0.5 * h)
 
     for line in lines:
         x1, y1, x2, y2 = line[0]
 
         dx = x2 - x1
-        dy = y2 - y1
+        dy = y1 - y2
 
         if abs(dx) < 1e-6:
             continue
@@ -106,7 +106,7 @@ def cd_color_segmentation(img):
 
         # Reject nearly horizontal lines.
         # These are usually crosswalk/intersection/stop-line-like markings.
-        if angle < 25:
+        if angle < 10:
             continue
 
         # Reject almost vertical tiny artifacts if needed.
@@ -120,20 +120,19 @@ def cd_color_segmentation(img):
 
         # Reject lines that cross too close to image center.
         # This prevents the center white line from becoming the target.
-        center_reject_width = 0.08 * w
-        if abs(x_at_target - image_center_x) < center_reject_width:
-            continue
+        
 
         debug_lines.append(line)
 
         # In image coordinates, left lane usually has negative slope.
         # Right lane usually has positive slope.
-        if slope < 0 and x_at_target < image_center_x:
+        if slope > 0 and x_at_target < image_center_x:
             left_candidates.append((line, x_at_target))
-        elif slope > 0 and x_at_target > image_center_x:
+        elif slope < 0 and x_at_target > image_center_x:
             right_candidates.append((line, x_at_target))
 
     if len(left_candidates) == 0 and len(right_candidates) == 0:
+        print("both empty")
         return None
 
     selected_lines = []
@@ -145,24 +144,27 @@ def cd_color_segmentation(img):
         # Choose the left line closest to the center, not the extreme outside line.
         left_line, left_x = max(left_candidates, key=lambda item: item[1])
         selected_lines.append(left_line)
+        print("left is not empty")
 
     if len(right_candidates) > 0:
         # Choose the right line closest to the center, not the extreme outside line.
         right_line, right_x = min(right_candidates, key=lambda item: item[1])
         selected_lines.append(right_line)
+        print("right is not empty")
 
     # If both lane boundaries are visible, drive between them.
     if left_x is not None and right_x is not None:
         x_target = int((left_x + right_x) / 2.0)
+        print("both not empty")
 
     # If only left boundary is visible, offset to the right by an estimated half lane width.
     elif left_x is not None:
-        estimated_lane_half_width_px = int(0.22 * w)
+        estimated_lane_half_width_px = int(0.12 * w)
         x_target = int(left_x + estimated_lane_half_width_px)
 
     # If only right boundary is visible, offset to the left by an estimated half lane width.
     elif right_x is not None:
-        estimated_lane_half_width_px = int(0.22 * w)
+        estimated_lane_half_width_px = int(0.12 * w)
         x_target = int(right_x - estimated_lane_half_width_px)
 
     else:

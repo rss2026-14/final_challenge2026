@@ -20,6 +20,7 @@ class PurePursuit(Node):
     """
 
     def __init__(self):
+
         super().__init__("pure_pursuit_point_follower")
 
         self.declare_parameter('odom_topic', "/vesc/odom")
@@ -29,12 +30,11 @@ class PurePursuit(Node):
         self.drive_topic = self.get_parameter('drive_topic').value
 
         self.wheelbase_length = 0.33 #in meters
-        self.lookahead = 1.0
         self.base_speed = 2.0 
 
         self.target_point = None
 
-        self.alpha = 0.7  # 0 = no smoothing, 1 = very smooth
+        self.alpha = 0.0  # 0 = no smoothing, 1 = very smooth
 
         self.pose_sub = self.create_subscription(Odometry, self.odom_topic, self.pose_callback, 1)
         self.point_track_sub = self.create_subscription(ConeLocation, "/relative_track", self.track_callback, 1)
@@ -48,11 +48,6 @@ class PurePursuit(Node):
         Receives (x, y) in vehicle frame from homography.
         Applies smoothing to reduce jitter.
         """
-        if msg.x_pos <= 0.05:
-            self.get_logger().warn(
-                f"Ignoring invalid/behind target: x={msg.x_pos:.2f}, y={msg.y_pos:.2f}"
-            )
-            return
         track_point = (msg.x_pos, msg.y_pos)
 
         if self.target_point is None:
@@ -99,7 +94,7 @@ class PurePursuit(Node):
         actual_lookahead_sq = target_x**2 + target_y**2
 
         if actual_lookahead_sq > 0:
-            steering_angle = np.arctan2(2.0 * self.wheelbase_length * target_y, actual_lookahead_sq)
+            steering_angle = np.arctan2(2*self.wheelbase_length*target_y, actual_lookahead_sq)
         else:
             steering_angle = 0.0
 
