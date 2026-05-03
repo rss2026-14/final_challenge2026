@@ -198,7 +198,7 @@ class BoatingExecutive(Node):
                 if len(self.goals) > 0:
                     self.current_goal = self.goals.pop(0)
                     self.set_state(State.NAVIGATING)
-                    self.goal_pub.publish(self.current_goal)
+                    # self.goal_pub.publish(self.current_goal)
 
                     self.get_logger().info(
                         f"Moving to next goal. {len(self.goals)} goals left in queue."
