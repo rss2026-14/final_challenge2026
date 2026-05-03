@@ -22,12 +22,20 @@
     <node pkg="final_challenge" name="parking_meter_controller" exec="parking_meter_controller" output="screen">
         <param name="drive_topic" value="/vesc/low_level/input/navigation" />
     </node>
-<!--
-    PARKING METER YOLO DETECTOR PIXEL PUBLISH THING
-    <node pkg="visual_servoing" name="cone_detector" exec="cone_detector" output="screen">
-    </node>  -->
-<!--
-    <node pkg="visual_servoing" name="homography_transformer" exec="homography_transformer" output="screen">
-    </node> -->
 
-    </launch>
+    <node pkg="final_challenge" name="homography_transform" exec="homography_transform" output="screen">
+    </node>
+
+    <node pkg="final_challenge" name="person_controller" exec="person_controller" output="screen">
+    </node>
+
+    <node pkg="final_challenge" name="traffic_light_controller" exec="traffic_light_controller" output="screen">
+    </node>
+
+    <node pkg="final_challenge" name="traffic_light_color_detector" exec="traffic_light_color_detector" output="screen">
+    </node>
+
+    <node pkg="final_challenge" name="yolo_final_challenge" exec="yolo_final_challenge" output="screen">
+    </node>
+
+</launch>
