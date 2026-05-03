@@ -11,5 +11,8 @@
 
     <node pkg="final_challenge" name="pure_pursuit" exec="pure_pursuit" output="screen">
     </node>
+    
+    <node pkg="final_challenge" name="pure_pursuit" exec="pure_pursuit" output="screen">
+    </node>
 
     </launch>
