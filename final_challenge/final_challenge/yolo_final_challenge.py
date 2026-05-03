@@ -276,7 +276,15 @@ class YoloAnnotatorNode(Node):
         return detections
     def draw_homography_point(self, image, det):
         u = (det.x1 + det.x2) // 2
-        v = det.y2
+
+        if class_name == "traffic light":
+            box_h = best.y2 - best.y1
+        
+            traffic_light_ground_offset = int(13.0/16.5 * box_h)
+        
+            v = best.y2 + traffic_light_ground_offset
+        else:
+            v = best.y2
 
         cv2.circle(image, (u, v), 7, (0, 0, 255), -1)
 
