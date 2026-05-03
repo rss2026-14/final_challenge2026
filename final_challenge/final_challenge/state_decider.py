@@ -29,6 +29,7 @@ class BoatingExecutive(Node):
 
         self.state = State.WAITING
         self.previous_state = State.WAITING
+        self.state_just_changed = False
 
         self.current_pose = None
         self.goals = []
@@ -111,7 +112,7 @@ class BoatingExecutive(Node):
 
         if self.state == State.WAITING:
             self.current_goal = self.goals.pop(0)
-            self.state = State.NAVIGATING
+            self.set_state(State.NAVIGATING)
             self.goal_pub.publish(self.current_goal)
 
             self.get_logger().info(
@@ -123,7 +124,7 @@ class BoatingExecutive(Node):
             self.get_logger().info(
                 "Parking controller confirmed success. Holding for 5 seconds."
             )
-            self.state = State.PARKED
+            self.set_state(State.PARKED)
             self.park_start_time = time.time()
 
     def parking_meter_callback(self, msg: ConeLocation):
@@ -131,7 +132,7 @@ class BoatingExecutive(Node):
             self.get_logger().info(
                 f"Parking meter found at x={msg.x_pos:.2f}, y={msg.y_pos:.2f}. Switching to PARKING."
             )
-            self.state = State.PARKING
+            self.set_state(State.PARKING)
 
     def traffic_light_obstacle_callback(self, msg: Bool):
         self.traffic_light_obstacle = msg.data
@@ -146,15 +147,14 @@ class BoatingExecutive(Node):
 
         if obstacle_detected:
             if self.state in [State.NAVIGATING, State.METER_SEARCH, State.PARKING]:
-                self.previous_state = self.state
-                self.state = State.OBSTACLE_PAUSE
+                self.set_state(State.OBSTACLE_PAUSE)
                 self.get_logger().warn("Obstacle detected. Pausing mission.")
                 self.hit_the_brakes()
 
         else:
             if self.state == State.OBSTACLE_PAUSE:
                 self.get_logger().info("Obstacle cleared. Resuming previous state.")
-                self.state = self.previous_state
+                self.set_state(self.previous_state)
 
     def loop(self):
         self.publish_state()
@@ -164,8 +164,14 @@ class BoatingExecutive(Node):
 
         elif self.state == State.NAVIGATING:
             # Keep publishing the goal so the planner receives it even if it started late.
-            if self.current_goal is not None:
-                self.goal_pub.publish(self.current_goal)
+            # if self.current_goal is not None:
+            #     self.goal_pub.publish(self.current_goal)
+
+            # Try publish once
+            if self.state_just_changed:
+                if self.current_goal is not None:
+                    self.get_logger().info("Publishing goal ONCE")
+                    self.goal_pub.publish(self.current_goal)
 
             dist = self.distance_to_goal()
 
@@ -173,7 +179,7 @@ class BoatingExecutive(Node):
                 self.get_logger().info(
                     f"Within 2m of goal. Distance: {dist:.2f}. Starting meter search."
                 )
-                self.state = State.METER_SEARCH
+                self.set_state(State.METER_SEARCH)
 
         elif self.state == State.METER_SEARCH:
             pass
@@ -191,14 +197,14 @@ class BoatingExecutive(Node):
 
                 if len(self.goals) > 0:
                     self.current_goal = self.goals.pop(0)
-                    self.state = State.NAVIGATING
+                    self.set_state(State.NAVIGATING)
                     self.goal_pub.publish(self.current_goal)
 
                     self.get_logger().info(
                         f"Moving to next goal. {len(self.goals)} goals left in queue."
                     )
                 else:
-                    self.state = State.DONE
+                    self.set_state(State.DONE)
                     self.get_logger().info("Course complete.")
 
         elif self.state == State.OBSTACLE_PAUSE:
@@ -206,6 +212,8 @@ class BoatingExecutive(Node):
 
         elif self.state == State.DONE:
             self.hit_the_brakes()
+
+        self.state_just_changed = False
 
     def publish_state(self):
         state_msg = String()
@@ -232,6 +240,26 @@ class BoatingExecutive(Node):
         drive_cmd.drive.steering_angle = float(steering_angle)
 
         self.drive_pub.publish(drive_cmd)
+
+    def set_state(self, new_state):
+        allowed = {
+            State.WAITING: [State.NAVIGATING],
+            State.NAVIGATING: [State.METER_SEARCH, State.OBSTACLE_PAUSE],
+            State.METER_SEARCH: [State.PARKING, State.OBSTACLE_PAUSE],
+            State.PARKING: [State.PARKED, State.OBSTACLE_PAUSE],
+            State.PARKED: [State.NAVIGATING, State.DONE],
+            State.OBSTACLE_PAUSE: list(State),
+            State.DONE: []
+        }
+
+        if new_state not in allowed[self.state]:
+            self.get_logger().warn(f"INVALID TRANSITION {self.state} -> {new_state}")
+            return
+
+        self.get_logger().info(f"{self.state.name} -> {new_state.name}")
+        self.previous_state = self.state
+        self.state = new_state
+        self.state_just_changed = True
 
 
 def main(args=None):
