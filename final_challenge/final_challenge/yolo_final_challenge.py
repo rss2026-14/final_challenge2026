@@ -163,7 +163,15 @@ class YoloAnnotatorNode(Node):
             best = max(matching_detections, key=lambda det: det.confidence)
 
             u = (best.x1 + best.x2) // 2
-            v = best.y2
+
+            if class_name == "traffic light":
+                box_h = best.y2 - best.y1
+            
+                traffic_light_ground_offset = int((1.0 + (13.0/16.5)) * box_h)
+            
+                v = best.y2 + traffic_light_ground_offset
+            else:
+                v = best.y2
 
             msg = ConeLocationPixel()
             msg.u = float(u)
