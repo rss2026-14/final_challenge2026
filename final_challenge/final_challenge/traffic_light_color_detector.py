@@ -84,10 +84,10 @@ class TrafficLightColorDetector(Node):
         hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
 
         #Red wraps around the HSV hue range, so use two masks.
-        lower_red_1 = np.array([0, 80, 80])
-        upper_red_1 = np.array([10, 255, 255])
+        lower_red_1 = np.array([0, 150, 150])
+        upper_red_1 = np.array([30, 255, 255])
 
-        lower_red_2 = np.array([170, 80, 80])
+        lower_red_2 = np.array([170, 150, 150])
         upper_red_2 = np.array([180, 255, 255])
 
         mask1 = cv2.inRange(hsv, lower_red_1, upper_red_1)
@@ -157,4 +157,3 @@ def main(args=None):
 
 if __name__ == "__main__":
     main()
-
