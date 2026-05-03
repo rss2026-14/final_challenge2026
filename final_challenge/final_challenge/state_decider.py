@@ -127,7 +127,7 @@ class BoatingExecutive(Node):
                 "Parking controller confirmed success. Holding for 5 seconds."
             )
             self.set_state(State.PARKED)
-            self.park_start_time = time.time()
+            self.park_start_time = self.get_clock().now()
 
     def parking_meter_callback(self, msg: ConeLocation):
         if self.state == State.METER_SEARCH:
@@ -202,7 +202,7 @@ class BoatingExecutive(Node):
         elif self.state == State.PARKED:
             self.hit_the_brakes()
 
-            elapsed_time = time.time() - self.park_start_time
+            elapsed_time = (self.get_clock().now() - self.park_start_time).nanoseconds * 1e-9
 
             if elapsed_time >= 5.0:
                 self.get_logger().info("Finished 5 second parking hold.")
