@@ -30,12 +30,14 @@ class BoatingExecutive(Node):
         self.state = State.WAITING
         self.previous_state = State.WAITING
         self.state_just_changed = False
+        self.resume_state = State.WAITING
 
         self.current_pose = None
         self.goals = []
         self.current_goal = None
 
         self.park_start_time = 0.0
+        self.last_goal_publish_time = 0.0
 
         self.traffic_light_obstacle = False
         self.person_obstacle = False
@@ -147,14 +149,16 @@ class BoatingExecutive(Node):
 
         if obstacle_detected:
             if self.state in [State.NAVIGATING, State.METER_SEARCH, State.PARKING]:
+                self.resume_state = self.state
                 self.set_state(State.OBSTACLE_PAUSE)
+
                 self.get_logger().warn("Obstacle detected. Pausing mission.")
                 self.hit_the_brakes()
 
         else:
             if self.state == State.OBSTACLE_PAUSE:
                 self.get_logger().info("Obstacle cleared. Resuming previous state.")
-                self.set_state(self.previous_state)
+                self.set_state(self.resume_state)
 
     def loop(self):
         self.publish_state()
@@ -168,10 +172,18 @@ class BoatingExecutive(Node):
             #     self.goal_pub.publish(self.current_goal)
 
             # Try publish once
-            if self.state_just_changed:
+            # if self.state_just_changed:
+            #     if self.current_goal is not None:
+            #         self.get_logger().info("Publishing goal ONCE")
+            #         self.goal_pub.publish(self.current_goal)
+
+            if self.state_just_changed or time.time() - self.last_goal_publish_time > 2.0:
                 if self.current_goal is not None:
-                    self.get_logger().info("Publishing goal ONCE")
+                    self.get_logger().info("Publishing goal")
                     self.goal_pub.publish(self.current_goal)
+                    self.last_goal_publish_time = time.time()
+
+            self.state_just_changed = False
 
             dist = self.distance_to_goal()
 
@@ -213,7 +225,7 @@ class BoatingExecutive(Node):
         elif self.state == State.DONE:
             self.hit_the_brakes()
 
-        self.state_just_changed = False
+
 
     def publish_state(self):
         state_msg = String()
