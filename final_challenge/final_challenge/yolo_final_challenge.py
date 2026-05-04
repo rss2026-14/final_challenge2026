@@ -104,12 +104,6 @@ class YoloAnnotatorNode(Node):
             10,
         )
 
-        self.person_px_pub = self.create_publisher(
-            ConeLocationPixel,
-            "/relative_person_px",
-            10,
-        )
-
         self.traffic_light_px_pub = self.create_publisher(
             ConeLocationPixel,
             "/relative_traffic_light_px",
@@ -124,7 +118,6 @@ class YoloAnnotatorNode(Node):
 
     def get_class_color_map(self) -> dict[str, tuple[int, int, int]]:
         return {
-            "person": (0, 255, 0),
             "parking meter": (255, 0, 0),
             "traffic light": (255, 255, 0),
         }
@@ -170,7 +163,7 @@ class YoloAnnotatorNode(Node):
         """
         Returns the pixel that should be passed into homography.
 
-        For person and parking meter:
+        For parking meter:
             use bottom-center of YOLO box.
 
         For traffic light:
@@ -200,7 +193,6 @@ class YoloAnnotatorNode(Node):
     ) -> None:
         class_to_pub = {
             "parking meter": self.parking_meter_px_pub,
-            "person": self.person_px_pub,
             "traffic light": self.traffic_light_px_pub,
         }
 

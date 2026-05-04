@@ -40,8 +40,6 @@ class BoatingExecutive(Node):
         self.last_goal_publish_time = 0.0
 
         self.traffic_light_obstacle = False
-        self.person_obstacle = False
-
         self.goal_pub = self.create_publisher(
             PoseStamped,
             "/planner/goal",
@@ -85,13 +83,6 @@ class BoatingExecutive(Node):
             Bool,
             "/traffic_light_obstacle_alert",
             self.traffic_light_obstacle_callback,
-            10
-        )
-
-        self.create_subscription(
-            Bool,
-            "/person_obstacle_alert",
-            self.person_obstacle_callback,
             10
         )
 
@@ -140,12 +131,8 @@ class BoatingExecutive(Node):
         self.traffic_light_obstacle = msg.data
         self.update_obstacle_state()
 
-    def person_obstacle_callback(self, msg: Bool):
-        self.person_obstacle = msg.data
-        self.update_obstacle_state()
-
     def update_obstacle_state(self):
-        obstacle_detected = self.traffic_light_obstacle or self.person_obstacle
+        obstacle_detected = self.traffic_light_obstacle
 
         if obstacle_detected:
             if self.state in [State.NAVIGATING, State.METER_SEARCH, State.PARKING]:
