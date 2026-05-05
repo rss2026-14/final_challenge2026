@@ -60,7 +60,7 @@ class BoatingExecutive(Node):
 
         self.create_subscription(
             Odometry,
-            "/odom",
+            "/pf/pose/odom",
             self.odom_callback,
             10
         )
