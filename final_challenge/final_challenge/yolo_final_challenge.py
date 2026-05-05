@@ -41,7 +41,7 @@ class YoloAnnotatorNode(Node):
             .double_value
         )
         self.iou_threshold = (
-            self.declare_parameter("iou_threshold", 0.5)
+            self.declare_parameter("iou_threshold", 0.1)
             .get_parameter_value()
             .double_value
         )

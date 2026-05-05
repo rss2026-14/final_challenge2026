@@ -174,9 +174,9 @@ class BoatingExecutive(Node):
 
             dist = self.distance_to_goal()
 
-            if dist < 2.0:
+            if dist < 1.0:
                 self.get_logger().info(
-                    f"Within 2m of goal. Distance: {dist:.2f}. Starting meter search."
+                    f"Within 1.0m of goal. Distance: {dist:.2f}. Starting meter search."
                 )
                 self.set_state(State.METER_SEARCH)
 
