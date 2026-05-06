@@ -39,7 +39,7 @@ class BoatingExecutive(Node):
         self.park_start_time = 0.0
         self.last_goal_publish_time = 0.0
 
-        self.declare_parameter("meter_search_speed", 0.35)
+        self.declare_parameter("meter_search_speed", 1.0)
         self.declare_parameter("meter_search_steering_angle", 0.34)
         self.meter_search_speed = (
             self.get_parameter("meter_search_speed")
