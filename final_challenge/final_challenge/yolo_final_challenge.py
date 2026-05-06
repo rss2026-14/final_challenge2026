@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import rclpy
 import torch
+import time
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
@@ -45,6 +46,46 @@ class YoloAnnotatorNode(Node):
             .get_parameter_value()
             .double_value
         )
+        self.image_queue_size = (
+            self.declare_parameter("image_queue_size", 1)
+            .get_parameter_value()
+            .integer_value
+        )
+        self.inference_period_sec = (
+            self.declare_parameter("inference_period_sec", 0.0)
+            .get_parameter_value()
+            .double_value
+        )
+        self.publish_annotated_image = (
+            self.declare_parameter("publish_annotated_image", True)
+            .get_parameter_value()
+            .bool_value
+        )
+        self.publish_traffic_light_crop_enabled = (
+            self.declare_parameter("publish_traffic_light_crop", True)
+            .get_parameter_value()
+            .bool_value
+        )
+        self.log_detections = (
+            self.declare_parameter("log_detections", True)
+            .get_parameter_value()
+            .bool_value
+        )
+        self.stop_after_first_detection = (
+            self.declare_parameter("stop_after_first_detection", False)
+            .get_parameter_value()
+            .bool_value
+        )
+        self.lock_target_class = (
+            self.declare_parameter("lock_target_class", "")
+            .get_parameter_value()
+            .string_value
+        ).strip()
+        self.unload_model_after_lock = (
+            self.declare_parameter("unload_model_after_lock", True)
+            .get_parameter_value()
+            .bool_value
+        )
 
         # Multiplier used to estimate where the traffic light touches the ground.
         # This pushes the homography pixel below the YOLO traffic-light box.
@@ -67,6 +108,13 @@ class YoloAnnotatorNode(Node):
         self.get_logger().info(f"Running {self.model_name} on device {self.device}")
         self.get_logger().info(f"Confidence threshold: {self.conf_threshold}")
         self.get_logger().info(
+            f"YOLO runtime options: queue={self.image_queue_size}, "
+            f"period={self.inference_period_sec:.2f}s, "
+            f"annotated={self.publish_annotated_image}, "
+            f"stop_after_first_detection={self.stop_after_first_detection}, "
+            f"lock_target_class='{self.lock_target_class}'"
+        )
+        self.get_logger().info(
             f"Traffic light ground offset ratio: {self.traffic_light_ground_offset_ratio:.3f}"
         )
 
@@ -78,12 +126,15 @@ class YoloAnnotatorNode(Node):
             self.get_logger().warn("No allowed classes matched the model's class list.")
 
         self.bridge = CvBridge()
+        self.processing_image = False
+        self.locked_detection = None
+        self.last_inference_time = 0.0
 
         self.sub = self.create_subscription(
             Image,
             "/zed/zed_node/rgb/image_rect_color",
             self.on_image,
-            10,
+            self.image_queue_size,
         )
 
         self.pub = self.create_publisher(
@@ -123,41 +174,106 @@ class YoloAnnotatorNode(Node):
         }
 
     def on_image(self, msg: Image) -> None:
-        try:
-            bgr = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-        except Exception as e:
-            self.get_logger().error(f"cv_bridge conversion failed: {e}")
+        if self.locked_detection is not None:
             return
 
+        if self.processing_image:
+            return
+
+        now = time.monotonic()
+        if now - self.last_inference_time < self.inference_period_sec:
+            return
+
+        self.processing_image = True
+
         try:
-            results = self.model(
-                bgr,
-                classes=self.allowed_cls,
-                conf=self.conf_threshold,
-                iou=self.iou_threshold,
-                verbose=False,
+            try:
+                bgr = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+            except Exception as e:
+                self.get_logger().error(f"cv_bridge conversion failed: {e}")
+                return
+
+            try:
+                results = self.model(
+                    bgr,
+                    classes=self.allowed_cls,
+                    conf=self.conf_threshold,
+                    iou=self.iou_threshold,
+                    verbose=False,
+                )
+            except Exception as e:
+                self.get_logger().error(f"YOLO inference failed: {e}")
+                return
+
+            self.last_inference_time = now
+
+            if not results:
+                return
+
+            dets = self.results_to_detections(results[0])
+
+            if self.log_detections:
+                self.log_detection_summary(dets)
+
+            if self.publish_traffic_light_crop_enabled:
+                self.publish_traffic_light_crop(bgr, dets, msg.header)
+
+            # Publish the ground-contact pixel estimate for homography.
+            self.publish_detected_object_px(dets, bgr.shape)
+
+            self.publish_detected_object(dets)
+
+            if self.publish_annotated_image:
+                annotated = self.draw_detections(bgr, dets)
+
+                out_msg = self.bridge.cv2_to_imgmsg(annotated, encoding="bgr8")
+                out_msg.header = msg.header
+                self.pub.publish(out_msg)
+
+            self.maybe_lock_detection(dets)
+        finally:
+            self.processing_image = False
+
+    def log_detection_summary(self, detections: List[Detection]) -> None:
+        if len(detections) == 0:
+            self.get_logger().info("YOLO detected nothing")
+            return
+
+        for det in detections:
+            self.get_logger().info(
+                f"YOLO detected {det.class_name}, "
+                f"conf={det.confidence:.2f}, "
+                f"box=({det.x1},{det.y1})-({det.x2},{det.y2})"
             )
-        except Exception as e:
-            self.get_logger().error(f"YOLO inference failed: {e}")
+
+    def maybe_lock_detection(self, detections: List[Detection]) -> None:
+        if not self.stop_after_first_detection or len(detections) == 0:
             return
 
-        if not results:
+        candidates = detections
+        if self.lock_target_class:
+            candidates = [
+                det for det in detections
+                if det.class_name == self.lock_target_class
+            ]
+
+        if len(candidates) == 0:
             return
 
-        dets = self.results_to_detections(results[0])
+        self.locked_detection = max(candidates, key=lambda det: det.confidence)
+        self.get_logger().warn(
+            f"Locked YOLO on {self.locked_detection.class_name} "
+            f"with confidence={self.locked_detection.confidence:.2f}; "
+            "stopping image subscription."
+        )
 
-        self.publish_traffic_light_crop(bgr, dets, msg.header)
+        self.destroy_subscription(self.sub)
+        self.sub = None
 
-        # Publish the ground-contact pixel estimate for homography.
-        self.publish_detected_object_px(dets, bgr.shape)
-
-        self.publish_detected_object(dets)
-
-        annotated = self.draw_detections(bgr, dets)
-
-        out_msg = self.bridge.cv2_to_imgmsg(annotated, encoding="bgr8")
-        out_msg.header = msg.header
-        self.pub.publish(out_msg)
+        if self.unload_model_after_lock:
+            self.model = None
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
     def get_homography_pixel(self, det: Detection, image_shape) -> tuple[int, int]:
         """
@@ -215,11 +331,12 @@ class YoloAnnotatorNode(Node):
 
             publisher.publish(msg)
 
-            self.get_logger().info(
-                f"{class_name} homography pixel: "
-                f"u={u}, v={v}, conf={best.confidence:.2f}, "
-                f"box=({best.x1},{best.y1})-({best.x2},{best.y2})"
-            )
+            if self.log_detections:
+                self.get_logger().info(
+                    f"{class_name} homography pixel: "
+                    f"u={u}, v={v}, conf={best.confidence:.2f}, "
+                    f"box=({best.x1},{best.y1})-({best.x2},{best.y2})"
+                )
 
     def publish_traffic_light_crop(
         self,
@@ -253,9 +370,10 @@ class YoloAnnotatorNode(Node):
         crop_msg.header = header
         self.traffic_light_crop_pub.publish(crop_msg)
 
-        self.get_logger().info(
-            f"Published traffic light crop, conf={best.confidence:.2f}"
-        )
+        if self.log_detections:
+            self.get_logger().info(
+                f"Published traffic light crop, conf={best.confidence:.2f}"
+            )
 
     def publish_detected_object(self, detections: List[Detection]) -> None:
         msg = String()
@@ -270,10 +388,11 @@ class YoloAnnotatorNode(Node):
         msg.data = best_detection.class_name
         self.detected_object_pub.publish(msg)
 
-        self.get_logger().info(
-            f"Detected object: {best_detection.class_name}, "
-            f"confidence={best_detection.confidence:.2f}"
-        )
+        if self.log_detections:
+            self.get_logger().info(
+                f"Detected object: {best_detection.class_name}, "
+                f"confidence={best_detection.confidence:.2f}"
+            )
 
     def results_to_detections(self, result) -> List[Detection]:
         detections = []
