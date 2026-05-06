@@ -47,21 +47,35 @@ class ParkingController(Node):
         # self.parking_distance = self.PARKING_DISTANCE  # meters; try playing with this number!
         self.relative_x = 0.0
         self.relative_y = 0.0
+        self.has_meter_target = False
+        self.success_sent = False
+        self.control_timer = self.create_timer(0.1, self.control_loop)
         self.add_on_set_parameters_callback(self.parameters_callback)
 
         self.get_logger().info("Parking Controller Initialized")
 
     def state_callback(self, msg):
+        previous_state = self.current_state
         self.current_state = msg.data
 
+        if previous_state != "PARKING" and self.current_state == "PARKING":
+            self.success_sent = False
+            self.get_logger().info("Parking state active; using latest meter target.")
+
     def relative_callback(self, msg):
-        # --- THE GATEKEEPER ---
-        # If the Executive hasn't told us to park, do absolutely nothing!
+        self.relative_x = msg.x_pos
+        self.relative_y = msg.y_pos
+        self.has_meter_target = True
+
+    def control_loop(self):
+        # Only the executive is allowed to activate parking control.
         if self.current_state != "PARKING":
             return
 
-        self.relative_x = msg.x_pos
-        self.relative_y = msg.y_pos
+        if not self.has_meter_target:
+            self.get_logger().warn("Parking active, but no parking meter target received yet.")
+            return
+
         drive_cmd = AckermannDriveStamped()
 
         angle = np.arctan2(self.relative_y, self.relative_x)
@@ -83,9 +97,11 @@ class ParkingController(Node):
                 velocity = 0.0
 
                 # Tell the Executive we did it
-                success_msg = Bool()
-                success_msg.data = True
-                self.success_pub.publish(success_msg)
+                if not self.success_sent:
+                    success_msg = Bool()
+                    success_msg.data = True
+                    self.success_pub.publish(success_msg)
+                    self.success_sent = True
 
             else:
                 steering_angle = -angle * self.angle_multiplier

@@ -39,6 +39,19 @@ class BoatingExecutive(Node):
         self.park_start_time = 0.0
         self.last_goal_publish_time = 0.0
 
+        self.declare_parameter("meter_search_speed", 0.25)
+        self.declare_parameter("meter_search_steering_angle", 0.34)
+        self.meter_search_speed = (
+            self.get_parameter("meter_search_speed")
+            .get_parameter_value()
+            .double_value
+        )
+        self.meter_search_steering_angle = (
+            self.get_parameter("meter_search_steering_angle")
+            .get_parameter_value()
+            .double_value
+        )
+
         self.traffic_light_obstacle = False
         self.goal_pub = self.create_publisher(
             PoseStamped,
@@ -181,9 +194,10 @@ class BoatingExecutive(Node):
                 self.set_state(State.METER_SEARCH)
 
         elif self.state == State.METER_SEARCH:
-            t = time.time()
-            steering = 0.25 if int(t / 2.0) % 2 == 0 else -0.25
-            self.publish_drive_command(0.2, steering)
+            self.publish_drive_command(
+                self.meter_search_speed,
+                self.meter_search_steering_angle,
+            )
 
         elif self.state == State.PARKING:
             pass

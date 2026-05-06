@@ -27,6 +27,7 @@ class TrafficLightColorDetector(Node):
 
         self.declare_parameter("red_pixel_ratio_threshold", 0.02)
         self.declare_parameter("min_red_area", 20)
+        self.declare_parameter("yellow_pixel_ratio_threshold", 0.02)
 
         self.red_pixel_ratio_threshold = (
             self.get_parameter("red_pixel_ratio_threshold")
@@ -38,6 +39,11 @@ class TrafficLightColorDetector(Node):
             self.get_parameter("min_red_area")
             .get_parameter_value()
             .integer_value
+        )
+        self.yellow_pixel_ratio_threshold = (
+            self.get_parameter("yellow_pixel_ratio_threshold")
+            .get_parameter_value()
+            .double_value
         )
 
         self.bridge = CvBridge()
@@ -83,15 +89,21 @@ class TrafficLightColorDetector(Node):
 
         hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
 
-        #Red wraps around the HSV hue range, so use two masks.
-        lower_red_1 = np.array([0, 150, 150])
-        upper_red_1 = np.array([30, 255, 255])
+        # Red wraps around the HSV hue range, so use two tight masks.
+        # OpenCV hue is 0-180; yellow is around 25-35, so do not let the
+        # low-red band extend into that range.
+        lower_red_1 = np.array([0, 140, 120])
+        upper_red_1 = np.array([10, 255, 255])
 
-        lower_red_2 = np.array([170, 150, 150])
+        lower_red_2 = np.array([170, 140, 120])
         upper_red_2 = np.array([180, 255, 255])
+
+        lower_yellow = np.array([20, 100, 100])
+        upper_yellow = np.array([40, 255, 255])
 
         mask1 = cv2.inRange(hsv, lower_red_1, upper_red_1)
         mask2 = cv2.inRange(hsv, lower_red_2, upper_red_2)
+        yellow_mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
 
         red_mask = cv2.bitwise_or(mask1, mask2)
 
@@ -100,8 +112,10 @@ class TrafficLightColorDetector(Node):
         red_mask = cv2.dilate(red_mask, kernel, iterations=2)
 
         red_pixels = cv2.countNonZero(red_mask)
+        yellow_pixels = cv2.countNonZero(yellow_mask)
         total_pixels = bgr.shape[0] * bgr.shape[1]
         red_ratio = red_pixels / float(total_pixels)
+        yellow_ratio = yellow_pixels / float(total_pixels)
 
         contours, _ = cv2.findContours(
             red_mask,
@@ -116,14 +130,18 @@ class TrafficLightColorDetector(Node):
         is_red = (
             red_ratio >= self.red_pixel_ratio_threshold
             and max_area >= self.min_red_area
+            and yellow_ratio < self.yellow_pixel_ratio_threshold
         )
 
         self.get_logger().info(
             f"Traffic light color debug: "
             f"red_pixels={red_pixels}, "
+            f"yellow_pixels={yellow_pixels}, "
             f"total_pixels={total_pixels}, "
             f"red_ratio={red_ratio:.4f}, "
+            f"yellow_ratio={yellow_ratio:.4f}, "
             f"ratio_threshold={self.red_pixel_ratio_threshold:.4f}, "
+            f"yellow_threshold={self.yellow_pixel_ratio_threshold:.4f}, "
             f"max_red_area={max_area:.1f}, "
             f"min_red_area={self.min_red_area}, "
             f"is_red={is_red}"
@@ -143,6 +161,11 @@ class TrafficLightColorDetector(Node):
                 self.min_red_area = param.value
                 self.get_logger().info(
                     f"Updated min_red_area to {self.min_red_area}"
+                )
+            elif param.name == "yellow_pixel_ratio_threshold":
+                self.yellow_pixel_ratio_threshold = param.value
+                self.get_logger().info(
+                    f"Updated yellow_pixel_ratio_threshold to {self.yellow_pixel_ratio_threshold}"
                 )
 
         return SetParametersResult(successful=True)
