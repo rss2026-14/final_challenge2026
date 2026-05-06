@@ -18,7 +18,7 @@ class ParkingController(Node):
     def __init__(self):
         super().__init__("parking_controller")
 
-        self.declare_parameter("drive_topic", "/vesc/low_level/input/navigation")
+        self.declare_parameter("drive_topic", "/vesc/high_level/input/nav_0")
         DRIVE_TOPIC = self.get_parameter("drive_topic").get_parameter_value().string_value  # set in launch file; different for simulator vs racecar
 
         self.declare_parameter("parking_distance", 1.0)
@@ -66,6 +66,17 @@ class ParkingController(Node):
         angle = np.arctan2(self.relative_y, self.relative_x)
         current_distance = np.sqrt(self.relative_x**2 + self.relative_y**2)
         distance_error = current_distance - self.parking_distance
+<<<<<<< Updated upstream
+=======
+
+        self.get_logger().info(
+            f"Parking meter distance={current_distance:.3f} m, "
+            f"x={self.relative_x:.3f} m, "
+            f"y={self.relative_y:.3f} m, "
+            f"target={self.parking_distance:.3f} m, "
+            f"error={distance_error:.3f} m"
+        )
+>>>>>>> Stashed changes
 
         if abs(distance_error) < self.distance_sensitivity:
             if abs(angle) < self.reverse_range:
