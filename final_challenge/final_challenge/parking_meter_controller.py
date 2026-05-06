@@ -67,7 +67,10 @@ class ParkingController(Node):
         current_distance = np.sqrt(self.relative_x**2 + self.relative_y**2)
         distance_error = current_distance - self.parking_distance
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 
         self.get_logger().info(
             f"Parking meter distance={current_distance:.3f} m, "
