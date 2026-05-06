@@ -6,6 +6,7 @@ import numpy as np
 from rcl_interfaces.msg import SetParametersResult
 from vs_msgs.msg import ConeLocation, ParkingError
 from ackermann_msgs.msg import AckermannDriveStamped
+from nav_msgs.msg import Odometry
 from std_msgs.msg import String, Bool
 
 class ParkingController(Node):
@@ -20,6 +21,9 @@ class ParkingController(Node):
 
         self.declare_parameter("drive_topic", "/vesc/low_level/input/navigation")
         DRIVE_TOPIC = self.get_parameter("drive_topic").get_parameter_value().string_value  # set in launch file; different for simulator vs racecar
+
+        self.declare_parameter("odom_topic", "/pf/pose/odom")
+        ODOM_TOPIC = self.get_parameter("odom_topic").get_parameter_value().string_value
 
         self.declare_parameter("parking_distance", 0.3)
         self.parking_distance = self.get_parameter("parking_distance").get_parameter_value().double_value
@@ -40,14 +44,18 @@ class ParkingController(Node):
 
         self.create_subscription(
             ConeLocation, "/relative_parking_meter", self.relative_callback, 1)
+        self.create_subscription(
+            Odometry, ODOM_TOPIC, self.odom_callback, 1)
 
         self.current_state = "WAITING"
         self.create_subscription(String, "/mission_state", self.state_callback, 10)
 
-        # self.parking_distance = self.PARKING_DISTANCE  # meters; try playing with this number!
         self.relative_x = 0.0
         self.relative_y = 0.0
         self.has_meter_target = False
+        self.current_pose = None
+        self.locked_meter_map_x = None
+        self.locked_meter_map_y = None
         self.success_sent = False
         self.control_timer = self.create_timer(0.1, self.control_loop)
         self.add_on_set_parameters_callback(self.parameters_callback)
@@ -60,12 +68,20 @@ class ParkingController(Node):
 
         if previous_state != "PARKING" and self.current_state == "PARKING":
             self.success_sent = False
-            self.get_logger().info("Parking state active; using latest meter target.")
+            self.locked_meter_map_x = None
+            self.locked_meter_map_y = None
+            self.get_logger().info("Parking state active; locking first meter target in map frame.")
 
     def relative_callback(self, msg):
         self.relative_x = msg.x_pos
         self.relative_y = msg.y_pos
         self.has_meter_target = True
+
+        if self.current_state == "PARKING" and not self.has_locked_meter_target():
+            self.lock_meter_target()
+
+    def odom_callback(self, msg):
+        self.current_pose = msg.pose.pose
 
     def control_loop(self):
         # Only the executive is allowed to activate parking control.
@@ -75,6 +91,15 @@ class ParkingController(Node):
         if not self.has_meter_target:
             self.get_logger().warn("Parking active, but no parking meter target received yet.")
             return
+
+        if not self.has_locked_meter_target():
+            self.lock_meter_target()
+
+        if not self.has_locked_meter_target():
+            self.get_logger().warn("Parking active, but cannot lock meter target without odometry.")
+            return
+
+        self.update_relative_error_from_locked_target()
 
         drive_cmd = AckermannDriveStamped()
 
@@ -130,6 +155,48 @@ class ParkingController(Node):
 
         self.drive_pub.publish(drive_cmd)
         self.error_publisher()
+
+    def has_locked_meter_target(self):
+        return self.locked_meter_map_x is not None and self.locked_meter_map_y is not None
+
+    def lock_meter_target(self):
+        if self.current_pose is None or not self.has_meter_target:
+            return
+
+        robot_x = self.current_pose.position.x
+        robot_y = self.current_pose.position.y
+        yaw = self.get_yaw(self.current_pose.orientation)
+
+        cos_yaw = np.cos(yaw)
+        sin_yaw = np.sin(yaw)
+
+        self.locked_meter_map_x = robot_x + cos_yaw * self.relative_x - sin_yaw * self.relative_y
+        self.locked_meter_map_y = robot_y + sin_yaw * self.relative_x + cos_yaw * self.relative_y
+
+        self.get_logger().info(
+            f"Locked parking meter map target: "
+            f"x={self.locked_meter_map_x:.3f}, "
+            f"y={self.locked_meter_map_y:.3f}"
+        )
+
+    def update_relative_error_from_locked_target(self):
+        robot_x = self.current_pose.position.x
+        robot_y = self.current_pose.position.y
+        yaw = self.get_yaw(self.current_pose.orientation)
+
+        dx = self.locked_meter_map_x - robot_x
+        dy = self.locked_meter_map_y - robot_y
+
+        cos_yaw = np.cos(yaw)
+        sin_yaw = np.sin(yaw)
+
+        self.relative_x = cos_yaw * dx + sin_yaw * dy
+        self.relative_y = -sin_yaw * dx + cos_yaw * dy
+
+    def get_yaw(self, orientation):
+        siny_cosp = 2.0 * (orientation.w * orientation.z + orientation.x * orientation.y)
+        cosy_cosp = 1.0 - 2.0 * (orientation.y * orientation.y + orientation.z * orientation.z)
+        return np.arctan2(siny_cosp, cosy_cosp)
 
     def error_publisher(self):
         """
