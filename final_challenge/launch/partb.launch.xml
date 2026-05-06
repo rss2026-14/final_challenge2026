@@ -23,6 +23,11 @@
         <param name="drive_topic" value="/vesc/low_level/input/navigation" />
     </node>
 
+    <node pkg="final_challenge" name="meter_search_controller" exec="meter_search_controller" output="screen">
+        <param name="drive_topic" value="/vesc/low_level/input/navigation" />
+        <param name="scan_topic" value="/scan" />
+    </node>
+
     <node pkg="final_challenge" name="homography_transform" exec="homography_transform" output="screen">
     </node>
 

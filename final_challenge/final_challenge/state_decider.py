@@ -105,6 +105,12 @@ class BoatingExecutive(Node):
             self.parking_meter_callback,
             10
         )
+        self.create_subscription(
+            Bool,
+            "/meter_search_failed",
+            self.meter_search_failed_callback,
+            10
+        )
 
         self.timer = self.create_timer(0.1, self.loop)
 
@@ -139,6 +145,11 @@ class BoatingExecutive(Node):
                 f"Parking meter found at x={msg.x_pos:.2f}, y={msg.y_pos:.2f}. Switching to PARKING."
             )
             self.set_state(State.PARKING)
+
+    def meter_search_failed_callback(self, msg: Bool):
+        if msg.data and self.state == State.METER_SEARCH:
+            self.get_logger().warn("Meter search failed. Ending mission.")
+            self.set_state(State.DONE)
 
     def traffic_light_obstacle_callback(self, msg: Bool):
         self.traffic_light_obstacle = msg.data
@@ -194,10 +205,7 @@ class BoatingExecutive(Node):
                 self.set_state(State.METER_SEARCH)
 
         elif self.state == State.METER_SEARCH:
-            self.publish_drive_command(
-                self.meter_search_speed,
-                self.meter_search_steering_angle,
-            )
+            pass
 
         elif self.state == State.PARKING:
             pass
@@ -260,7 +268,7 @@ class BoatingExecutive(Node):
         allowed = {
             State.WAITING: [State.NAVIGATING],
             State.NAVIGATING: [State.METER_SEARCH, State.OBSTACLE_PAUSE],
-            State.METER_SEARCH: [State.PARKING, State.OBSTACLE_PAUSE],
+            State.METER_SEARCH: [State.PARKING, State.OBSTACLE_PAUSE, State.DONE],
             State.PARKING: [State.PARKED, State.OBSTACLE_PAUSE],
             State.PARKED: [State.NAVIGATING, State.DONE],
             State.OBSTACLE_PAUSE: list(State),

@@ -29,6 +29,7 @@ setup(
     entry_points={
         'console_scripts': [
             'boating_executive = final_challenge.state_decider:main',
+            'meter_search_controller = final_challenge.meter_search_controller:main',
             'parking_meter_controller = final_challenge.parking_meter_controller:main',
             'traffic_light_controller = final_challenge.traffic_light_controller:main',
             'traffic_light_color_detector = final_challenge.traffic_light_color_detector:main',
