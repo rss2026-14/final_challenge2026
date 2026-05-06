@@ -181,7 +181,9 @@ class BoatingExecutive(Node):
                 self.set_state(State.METER_SEARCH)
 
         elif self.state == State.METER_SEARCH:
-            pass
+            t = time.time()
+            steering = 0.25 if int(t / 2.0) % 2 == 0 else -0.25
+            self.publish_drive_command(0.2, steering)
 
         elif self.state == State.PARKING:
             pass
