@@ -230,11 +230,11 @@ class BoatingExecutive(Node):
                     self.set_state(State.DONE)
                     self.get_logger().info("Course complete.")
 
-                self.reverse_time = self.get_clock().now()
+                # self.reverse_time = self.get_clock().now()
 
-                elapsed_time_reversed = (self.get_clock().now() - self.reverse_time).nanoseconds * 1e-9
-                if elapsed_time_reversed <= 2.0:
-                    self.publish_drive_command(-0.7, 0.0)
+                # elapsed_time_reversed = (self.get_clock().now() - self.reverse_time).nanoseconds * 1e-9
+                # if elapsed_time_reversed <= 2.0:
+                #     self.publish_drive_command(-0.7, 0.0)
 
 
         elif self.state == State.OBSTACLE_PAUSE:
