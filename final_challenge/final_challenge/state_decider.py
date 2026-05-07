@@ -20,7 +20,8 @@ class State(Enum):
     METER_SEARCH = 4
     PARKING = 5
     PARKED = 6
-    DONE = 7
+    REVERSE = 7
+    DONE = 8
 
 
 class BoatingExecutive(Node):
@@ -37,6 +38,7 @@ class BoatingExecutive(Node):
         self.current_goal = None
 
         self.park_start_time = None
+        self.reverse_start_time = None
         self.last_goal_publish_time = 0.0
 
         self.declare_parameter("meter_search_speed", 1.0)
@@ -217,20 +219,22 @@ class BoatingExecutive(Node):
             self.get_logger().info(
                 f"Holding parked state: {elapsed_time_parking:.2f}s"
             )
+
             if elapsed_time_parking >= 5.0:
                 self.get_logger().info("Finished 5 second parking hold.")
+                self.set_state(State.REVERSE)
 
-                if len(self.goals) > 0:
-                    self.current_goal = self.goals.pop(0)
-                    self.set_state(State.NAVIGATING)
-                    # self.goal_pub.publish(self.current_goal)
+            #     if len(self.goals) > 0:
+            #         self.current_goal = self.goals.pop(0)
+            #         # self.set_state(State.NAVIGATING)
+            #         # self.goal_pub.publish(self.current_goal)
 
-                    self.get_logger().info(
-                        f"Moving to next goal. {len(self.goals)} goals left in queue."
-                    )
-                else:
-                    self.set_state(State.DONE)
-                    self.get_logger().info("Course complete.")
+            #         self.get_logger().info(
+            #             f"Moving to next goal. {len(self.goals)} goals left in queue."
+            #         )
+            #     else:
+            #         self.set_state(State.DONE)
+            #         self.get_logger().info("Course complete.")
 
                 # self.reverse_time = self.get_clock().now()
 
@@ -238,6 +242,30 @@ class BoatingExecutive(Node):
                 # if elapsed_time_reversed <= 2.0:
                 #     self.publish_drive_command(-0.7, 0.0)
 
+        elif self.state == State.REVERSE:
+
+            elapsed_reverse = (
+                self.get_clock().now() - self.reverse_start_time
+            ).nanoseconds * 1e-9
+
+            if elapsed_reverse < 2.0:
+                self.publish_drive_command(-0.7, 0.0)
+
+            else:
+                self.hit_the_brakes()
+
+                if len(self.goals) > 0:
+                    self.current_goal = self.goals.pop(0)
+
+                    self.get_logger().info(
+                        f"Moving to next goal. {len(self.goals)} goals left."
+                    )
+
+                    self.set_state(State.NAVIGATING)
+
+                else:
+                    self.get_logger().info("Course complete.")
+                    self.set_state(State.DONE)
 
         elif self.state == State.OBSTACLE_PAUSE:
             self.hit_the_brakes()
@@ -279,7 +307,8 @@ class BoatingExecutive(Node):
             State.NAVIGATING: [State.METER_SEARCH, State.OBSTACLE_PAUSE],
             State.METER_SEARCH: [State.PARKING],
             State.PARKING: [State.PARKED],
-            State.PARKED: [State.NAVIGATING, State.DONE],
+            State.PARKED: [State.REVERSE],
+            State.REVERSE: [State.NAVIGATING, State.DONE],
             State.OBSTACLE_PAUSE: [State.NAVIGATING],
             State.DONE: []
         }
@@ -290,6 +319,8 @@ class BoatingExecutive(Node):
 
         if new_state == State.PARKED:
             self.park_start_time = self.get_clock().now()
+        if new_state == State.REVERSE:
+            self.reverse_start_time = self.get_clock().now()
 
         self.get_logger().info(f"{self.state.name} -> {new_state.name}")
         self.previous_state = self.state
