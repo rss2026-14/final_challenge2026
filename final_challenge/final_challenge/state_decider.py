@@ -248,8 +248,8 @@ class BoatingExecutive(Node):
                 self.get_clock().now() - self.reverse_start_time
             ).nanoseconds * 1e-9
 
-            if elapsed_reverse < 2.0:
-                self.publish_drive_command(-1.0, -0.2)
+            if elapsed_reverse < 5.0:
+                self.publish_drive_command(-1.0, 0.0)
 
             else:
                 self.hit_the_brakes()
