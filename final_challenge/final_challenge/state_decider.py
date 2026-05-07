@@ -61,7 +61,7 @@ class BoatingExecutive(Node):
 
         self.drive_pub = self.create_publisher(
             AckermannDriveStamped,
-            "/vesc/high_level/input/nav_0",
+            "/vesc/input/navigation",
             1
         )
 

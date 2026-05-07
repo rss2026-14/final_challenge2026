@@ -20,11 +20,11 @@
     </node>
 
     <node pkg="final_challenge" name="parking_meter_controller" exec="parking_meter_controller" output="screen">
-        <param name="drive_topic" value="/vesc/high_level/input/nav_0" />
+        <param name="drive_topic" value="/vesc/input/navigation" />
     </node>
 
     <node pkg="final_challenge" name="meter_search_controller" exec="meter_search_controller" output="screen">
-        <param name="drive_topic" value="/vesc/high_level/input/nav_0" />
+        <param name="drive_topic" value="/vesc/input/navigation" />
         <param name="scan_topic" value="/scan" />
     </node>
 
