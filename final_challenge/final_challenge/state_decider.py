@@ -36,7 +36,7 @@ class BoatingExecutive(Node):
         self.goals = []
         self.current_goal = None
 
-        self.park_start_time = 0.0
+        self.park_start_time = None
         self.last_goal_publish_time = 0.0
 
         self.declare_parameter("meter_search_speed", 1.0)
@@ -137,7 +137,7 @@ class BoatingExecutive(Node):
                 "Parking controller confirmed success. Holding for 5 seconds."
             )
             self.set_state(State.PARKED)
-            self.park_start_time = self.get_clock().now()
+            # self.park_start_time = self.get_clock().now()
 
     def parking_meter_callback(self, msg: ConeLocation):
         if self.state == State.METER_SEARCH:
@@ -214,7 +214,9 @@ class BoatingExecutive(Node):
             self.hit_the_brakes()
 
             elapsed_time_parking = (self.get_clock().now() - self.park_start_time).nanoseconds * 1e-9
-
+            self.get_logger().info(
+                f"Holding parked state: {elapsed_time_parking:.2f}s"
+            )
             if elapsed_time_parking >= 5.0:
                 self.get_logger().info("Finished 5 second parking hold.")
 
@@ -277,7 +279,7 @@ class BoatingExecutive(Node):
             State.NAVIGATING: [State.METER_SEARCH, State.OBSTACLE_PAUSE],
             State.METER_SEARCH: [State.PARKING],
             State.PARKING: [State.PARKED],
-            State.PARKED: [State.NAVIGATING],
+            State.PARKED: [State.NAVIGATING, State.DONE],
             State.OBSTACLE_PAUSE: [State.NAVIGATING],
             State.DONE: []
         }
@@ -285,6 +287,9 @@ class BoatingExecutive(Node):
         if new_state not in allowed[self.state]:
             self.get_logger().warn(f"INVALID TRANSITION {self.state} -> {new_state}")
             return
+
+        if new_state == State.PARKED:
+            self.park_start_time = self.get_clock().now()
 
         self.get_logger().info(f"{self.state.name} -> {new_state.name}")
         self.previous_state = self.state
