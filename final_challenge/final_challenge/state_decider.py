@@ -213,9 +213,9 @@ class BoatingExecutive(Node):
         elif self.state == State.PARKED:
             self.hit_the_brakes()
 
-            elapsed_time = (self.get_clock().now() - self.park_start_time).nanoseconds * 1e-9
+            elapsed_time_parking = (self.get_clock().now() - self.park_start_time).nanoseconds * 1e-9
 
-            if elapsed_time >= 5.0:
+            if elapsed_time_parking >= 5.0:
                 self.get_logger().info("Finished 5 second parking hold.")
 
                 if len(self.goals) > 0:
@@ -229,6 +229,13 @@ class BoatingExecutive(Node):
                 else:
                     self.set_state(State.DONE)
                     self.get_logger().info("Course complete.")
+
+                self.reverse_time = self.get_clock().now()
+
+                elapsed_time_reversed = (self.get_clock().now() - self.reverse_time).nanoseconds * 1e-9
+                if elapsed_time_reversed <= 2.0:
+                    self.publish_drive_command(-0.7, 0.0)
+
 
         elif self.state == State.OBSTACLE_PAUSE:
             self.hit_the_brakes()
