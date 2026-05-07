@@ -25,7 +25,7 @@ class ParkingController(Node):
         self.declare_parameter("odom_topic", "/pf/pose/odom")
         ODOM_TOPIC = self.get_parameter("odom_topic").get_parameter_value().string_value
 
-        self.declare_parameter("parking_distance", 0.8)
+        self.declare_parameter("parking_distance", 1.0)
         self.parking_distance = self.get_parameter("parking_distance").get_parameter_value().double_value
 
         self.declare_parameter("angle_multiplier", 2.5)
@@ -150,8 +150,8 @@ class ParkingController(Node):
 
         drive_cmd.header.stamp = self.get_clock().now().to_msg()
         drive_cmd.header.frame_id = 'base_link'
-        drive_cmd.drive.speed = float(velocity)
-        drive_cmd.drive.steering_angle = float(steering_angle)
+        drive_cmd.drive.speed = velocity
+        drive_cmd.drive.steering_angle = steering_angle
 
         self.drive_pub.publish(drive_cmd)
         self.error_publisher()

@@ -35,7 +35,7 @@ class MeterSearchController(Node):
         super().__init__("meter_search_controller")
 
         self.declare_parameter("scan_topic", "/scan")
-        self.declare_parameter("drive_topic", "/vesc/input/navigation")
+        self.declare_parameter("drive_topic", "/vesc/high_level/input/nav_0")
         self.declare_parameter("near_wall_distance", 0.5)
         self.declare_parameter("far_wall_distance", 1.0)
         self.declare_parameter("approach_speed", 0.7)
@@ -48,7 +48,7 @@ class MeterSearchController(Node):
         self.declare_parameter("forward_search_angle", math.pi / 2.0)
         self.declare_parameter("k_turn_forward_duration", 1.2)
         self.declare_parameter("k_turn_reverse_duration", 1.2)
-        self.declare_parameter("max_k_turn_cycles", 4)
+        self.declare_parameter("max_k_turn_cycles", 10)
 
         self.scan_topic = self.get_parameter("scan_topic").value
         self.drive_topic = self.get_parameter("drive_topic").value
@@ -210,8 +210,8 @@ class MeterSearchController(Node):
         drive_cmd = AckermannDriveStamped()
         drive_cmd.header.stamp = self.get_clock().now().to_msg()
         drive_cmd.header.frame_id = "base_link"
-        drive_cmd.drive.speed = float(speed)
-        drive_cmd.drive.steering_angle = float(steering_angle)
+        drive_cmd.drive.speed = speed
+        drive_cmd.drive.steering_angle = steering_angle
         self.drive_pub.publish(drive_cmd)
 
     def now_sec(self):
