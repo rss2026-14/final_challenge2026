@@ -25,7 +25,7 @@ class ParkingController(Node):
         self.declare_parameter("odom_topic", "/pf/pose/odom")
         ODOM_TOPIC = self.get_parameter("odom_topic").get_parameter_value().string_value
 
-        self.declare_parameter("parking_distance", 0.3)
+        self.declare_parameter("parking_distance", 0.8)
         self.parking_distance = self.get_parameter("parking_distance").get_parameter_value().double_value
 
         self.declare_parameter("angle_multiplier", 2.5)
