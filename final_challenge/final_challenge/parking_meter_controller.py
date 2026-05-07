@@ -60,6 +60,9 @@ class ParkingController(Node):
         self.control_timer = self.create_timer(0.1, self.control_loop)
         self.add_on_set_parameters_callback(self.parameters_callback)
 
+        self.parking_complete = False
+
+
         self.get_logger().info("Parking Controller Initialized")
 
     def state_callback(self, msg):
@@ -68,6 +71,7 @@ class ParkingController(Node):
 
         if previous_state != "PARKING" and self.current_state == "PARKING":
             self.success_sent = False
+            self.parking_complete = False
             self.locked_meter_map_x = None
             self.locked_meter_map_y = None
             self.get_logger().info("Parking state active; locking first meter target in map frame.")
@@ -85,6 +89,10 @@ class ParkingController(Node):
 
     def control_loop(self):
         # Only the executive is allowed to activate parking control.
+        if self.parking_complete:
+            self.publish_drive_command(0.0, 0.0)
+            return
+
         if self.current_state != "PARKING":
             return
 
@@ -123,10 +131,14 @@ class ParkingController(Node):
 
                 # Tell the Executive we did it
                 if not self.success_sent:
+                    self.get_logger().info("Parking successful.")
+
                     success_msg = Bool()
                     success_msg.data = True
                     self.success_pub.publish(success_msg)
+
                     self.success_sent = True
+                    self.parking_complete = True
 
             else:
                 steering_angle = -angle * self.angle_multiplier
@@ -148,13 +160,25 @@ class ParkingController(Node):
 
         steering_angle = np.clip(steering_angle, -0.34, 0.34)
 
+        # drive_cmd.header.stamp = self.get_clock().now().to_msg()
+        # drive_cmd.header.frame_id = 'base_link'
+        # drive_cmd.drive.speed = velocity
+        # drive_cmd.drive.steering_angle = steering_angle
+
+        # self.drive_pub.publish(drive_cmd)
+        self.publish_drive_command(velocity, steering_angle)
+        self.error_publisher()
+
+    def publish_drive_command(self, speed, steering_angle):
+        drive_cmd = AckermannDriveStamped()
+
         drive_cmd.header.stamp = self.get_clock().now().to_msg()
-        drive_cmd.header.frame_id = 'base_link'
-        drive_cmd.drive.speed = velocity
+        drive_cmd.header.frame_id = "base_link"
+
+        drive_cmd.drive.speed = speed
         drive_cmd.drive.steering_angle = steering_angle
 
         self.drive_pub.publish(drive_cmd)
-        self.error_publisher()
 
     def has_locked_meter_target(self):
         return self.locked_meter_map_x is not None and self.locked_meter_map_y is not None
