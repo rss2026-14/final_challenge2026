@@ -268,10 +268,10 @@ class BoatingExecutive(Node):
         allowed = {
             State.WAITING: [State.NAVIGATING],
             State.NAVIGATING: [State.METER_SEARCH, State.OBSTACLE_PAUSE],
-            State.METER_SEARCH: [State.PARKING, State.OBSTACLE_PAUSE, State.DONE],
-            State.PARKING: [State.PARKED, State.OBSTACLE_PAUSE],
-            State.PARKED: [State.NAVIGATING, State.DONE],
-            State.OBSTACLE_PAUSE: list(State),
+            State.METER_SEARCH: [State.PARKING],
+            State.PARKING: [State.PARKED],
+            State.PARKED: [State.NAVIGATING],
+            State.OBSTACLE_PAUSE: [State.NAVIGATING],
             State.DONE: []
         }
 
