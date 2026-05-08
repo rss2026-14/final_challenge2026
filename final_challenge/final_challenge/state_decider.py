@@ -113,6 +113,12 @@ class BoatingExecutive(Node):
             self.meter_search_failed_callback,
             10
         )
+        self.create_subscription(
+            Bool,
+            "/trajectory/reached",
+            self.trajectory_reached_callback,
+            10
+        )
 
         self.timer = self.create_timer(0.1, self.loop)
 
@@ -152,6 +158,13 @@ class BoatingExecutive(Node):
         if msg.data and self.state == State.METER_SEARCH:
             self.get_logger().warn("Meter search failed. Ending mission.")
             self.set_state(State.DONE)
+
+    def trajectory_reached_callback(self, msg: Bool):
+        if msg.data and self.state == State.NAVIGATING:
+            self.get_logger().info(
+                "Trajectory follower reported goal reached. Starting meter search."
+            )
+            self.set_state(State.METER_SEARCH)
 
     def traffic_light_obstacle_callback(self, msg: Bool):
         self.traffic_light_obstacle = msg.data
@@ -305,11 +318,11 @@ class BoatingExecutive(Node):
         allowed = {
             State.WAITING: [State.NAVIGATING],
             State.NAVIGATING: [State.METER_SEARCH, State.OBSTACLE_PAUSE],
-            State.METER_SEARCH: [State.PARKING],
-            State.PARKING: [State.PARKED],
+            State.METER_SEARCH: [State.PARKING, State.OBSTACLE_PAUSE, State.DONE],
+            State.PARKING: [State.PARKED, State.OBSTACLE_PAUSE],
             State.PARKED: [State.REVERSE],
             State.REVERSE: [State.NAVIGATING, State.DONE],
-            State.OBSTACLE_PAUSE: [State.NAVIGATING],
+            State.OBSTACLE_PAUSE: [State.NAVIGATING, State.METER_SEARCH, State.PARKING],
             State.DONE: []
         }
 

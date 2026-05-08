@@ -89,11 +89,11 @@ class ParkingController(Node):
 
     def control_loop(self):
         # Only the executive is allowed to activate parking control.
-        if self.parking_complete:
-            self.publish_drive_command(0.0, 0.0)
+        if self.current_state != "PARKING":
             return
 
-        if self.current_state != "PARKING":
+        if self.parking_complete:
+            self.publish_drive_command(0.0, 0.0)
             return
 
         if not self.has_meter_target:

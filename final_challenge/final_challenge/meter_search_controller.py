@@ -223,7 +223,6 @@ class MeterSearchController(Node):
 
     def control_loop(self):
         if self.current_state != "METER_SEARCH":
-            self.publish_drive_command(0.0, 0.0)
             return
 
         if self.phase == SearchPhase.APPROACH_WALL:

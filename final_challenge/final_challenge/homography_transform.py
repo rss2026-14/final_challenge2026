@@ -136,6 +136,10 @@ class HomographyTransformer(Node):
         u = msg.u
         v = msg.v
 
+        if u < 0.0 or v < 0.0:
+            self.get_logger().warn("Ignoring invalid track pixel detection")
+            return
+
         # Call to main function
         x, y = self.transformUvToXy(u, v)
 

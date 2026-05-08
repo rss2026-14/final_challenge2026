@@ -5,13 +5,11 @@
 
     <node pkg="final_challenge" name="track_detector" exec="track_detector" output="screen">
     </node>
+    
 
     <node pkg="final_challenge" name="homography_transform" exec="homography_transform" output="screen">
     </node>
 
-    <node pkg="final_challenge" name="pure_pursuit" exec="pure_pursuit" output="screen">
-    </node>
-    
     <node pkg="final_challenge" name="pure_pursuit" exec="pure_pursuit" output="screen">
     </node>
 
