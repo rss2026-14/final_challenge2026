@@ -170,12 +170,12 @@ def cd_color_segmentation(img):
 
     # If only left boundary is visible, offset to the right by an estimated half lane width.
     elif left_x is not None:
-        estimated_lane_half_width_px = int(0.05 * w)
+        estimated_lane_half_width_px = int(0.03 * w)
         x_target = int(left_x + estimated_lane_half_width_px)
 
     # If only right boundary is visible, offset to the left by an estimated half lane width.
     elif right_x is not None:
-        estimated_lane_half_width_px = int(0.05 * w)
+        estimated_lane_half_width_px = int(0.03 * w)
         x_target = int(right_x - estimated_lane_half_width_px)
 
     else:
