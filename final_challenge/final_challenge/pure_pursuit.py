@@ -95,9 +95,9 @@ class PurePursuit(Node):
         steering_angle = np.arctan2(2*self.wheelbase_length*target_y, actual_lookahead_sq)
 
         if steering_angle < 0.15:
-            steering_angle *= 0.2
+            steering_angle *= 0.35
         else:
-            steering_angle *= 0.55
+            steering_angle *= 0.65
         steering_angle=np.clip(steering_angle,-0.34,0.34)
         speed=self.base_speed-6.0*abs(steering_angle)
 
