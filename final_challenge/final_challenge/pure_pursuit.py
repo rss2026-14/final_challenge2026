@@ -30,16 +30,16 @@ class PurePursuit(Node):
         self.drive_topic = self.get_parameter('drive_topic').value
 
         self.wheelbase_length = 0.33 #in meters
-        self.base_speed = 2.0
+        self.base_speed = 4.0
 
         self.target_point = None
 
         self.alpha = 0.0  # 0 = no smoothing, 1 = very smooth
 
-        self.pose_sub = self.create_subscription(Odometry, self.odom_topic, self.pose_callback, 1)
-        self.point_track_sub = self.create_subscription(ConeLocation, "/relative_track", self.track_callback, 1)
+        self.pose_sub = self.create_subscription(Odometry, self.odom_topic, self.pose_callback, 10)
+        self.point_track_sub = self.create_subscription(ConeLocation, "/relative_track", self.track_callback, 10)
 
-        self.drive_pub = self.create_publisher(AckermannDriveStamped, self.drive_topic, 1)
+        self.drive_pub = self.create_publisher(AckermannDriveStamped, self.drive_topic, 10)
 
         self.get_logger().info("Point Follower Initialized")
 
@@ -92,15 +92,16 @@ class PurePursuit(Node):
         #     target_x = 0.3
 
         actual_lookahead_sq = target_x**2 + target_y**2
+        steering_angle = np.arctan2(2*self.wheelbase_length*target_y, actual_lookahead_sq)
 
-        if actual_lookahead_sq > 0:
-            steering_angle = np.arctan2(2*self.wheelbase_length*target_y, actual_lookahead_sq)
+        if steering_angle < 0.15:
+            steering_angle *= 0.25
         else:
-            steering_angle = 0.0
+            steering_angle *= 0.55
+        steering_angle=np.clip(steering_angle,-0.34,0.34)
+        speed=self.base_speed-6.0*abs(steering_angle)
 
-        steering_angle = np.clip(steering_angle, -0.34, 0.34)
-
-        self._publish_drive_command(self.base_speed, float(steering_angle))
+        self._publish_drive_command(speed, float(steering_angle))
 
     def _publish_drive_command(self, speed, steering_angle):
         """

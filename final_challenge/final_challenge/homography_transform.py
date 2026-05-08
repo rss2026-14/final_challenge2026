@@ -73,8 +73,8 @@ class HomographyTransformer(Node):
         super().__init__("homography_transformer")
 
         self.track_pub = self.create_publisher(ConeLocation, "/relative_track", 10)
-        self.marker_pub = self.create_publisher(Marker, "/track_marker", 1)
-        self.track_px_sub = self.create_subscription(ConeLocationPixel, "/relative_track_px", self.track_detection_callback, 1)
+        self.marker_pub = self.create_publisher(Marker, "/track_marker", 10)
+        self.track_px_sub = self.create_subscription(ConeLocationPixel, "/relative_track_px", self.track_detection_callback, 10)
 
         self.parking_meter_pub = self.create_publisher(
             ConeLocation, "/relative_parking_meter", 10)

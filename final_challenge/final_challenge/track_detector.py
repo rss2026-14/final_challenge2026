@@ -27,7 +27,7 @@ class TrackDetector(Node):
         # Subscribe to ZED camera RGB frames
         self.track_pub = self.create_publisher(ConeLocationPixel, "/relative_track_px", 10)
         self.debug_pub = self.create_publisher(Image, "/track_debug_img", 10)
-        self.image_sub = self.create_subscription(Image, "/zed/zed_node/rgb/image_rect_color", self.image_callback, 5)
+        self.image_sub = self.create_subscription(Image, "/zed/zed_node/rgb/image_rect_color", self.image_callback, 10)
         self.bridge = CvBridge()  # Converts between ROS images and OpenCV Images
 
         self.get_logger().info("Track Detector Initialized")
