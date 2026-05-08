@@ -37,7 +37,7 @@ class MeterSearchController(Node):
         super().__init__("meter_search_controller")
 
         self.declare_parameter("scan_topic", "/scan")
-        self.declare_parameter("drive_topic", "/vesc/high_level/input/nav_0")
+        self.declare_parameter("drive_topic", "/vesc/input/navigation")
 
         self.declare_parameter("near_wall_distance", 0.5)
         self.declare_parameter("far_wall_distance", 1.0)

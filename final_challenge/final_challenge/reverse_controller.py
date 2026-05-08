@@ -26,7 +26,7 @@ class ReverseController(Node):
     def __init__(self):
         super().__init__("reverse_controller")
 
-        self.declare_parameter("drive_topic", "/vesc/high_level/input/nav_0")
+        self.declare_parameter("drive_topic", "/vesc/input/navigation")
         self.declare_parameter("back_up_speed", -1.0)
         self.declare_parameter("k_turn_speed", 0.8)
         self.declare_parameter("max_steering_angle", 0.34)
