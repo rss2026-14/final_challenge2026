@@ -52,14 +52,14 @@ class MeterSearchController(Node):
         self.declare_parameter("min_valid_range", 0.08)
         self.declare_parameter("max_valid_range", 8.0)
 
-        self.declare_parameter("forward_search_angle", math.pi / 2.0)
+        self.declare_parameter("forward_search_angle", math.pi / 4.0)
 
-        self.declare_parameter("k_turn_forward_duration", 2.0)
-        self.declare_parameter("k_turn_reverse_duration", 2.0)
+        self.declare_parameter("k_turn_forward_duration", 1.0)
+        self.declare_parameter("k_turn_reverse_duration", 1.0)
 
         self.declare_parameter("reverse_pause_duration", 1.0)
 
-        self.declare_parameter("max_k_turn_cycles", 1)
+        self.declare_parameter("max_k_turn_cycles", 3)
 
         self.scan_topic = self.get_parameter("scan_topic").value
         self.drive_topic = self.get_parameter("drive_topic").value
