@@ -127,10 +127,8 @@ class HomographyTransformer(Node):
 
         # Also publish to /relative_track so clicking can be used to test the homography pipeline
         relative_xy_msg = ConeLocation()
-        # relative_xy_msg.x_pos = x
-        # relative_xy_msg.y_pos = y
-        relative_xy_msg.x_pos = 320
-        relative_xy_msg.y_pos = 180
+        relative_xy_msg.x_pos = x
+        relative_xy_msg.y_pos = y
         self.track_pub.publish(relative_xy_msg)
 
     def track_detection_callback(self, msg):
