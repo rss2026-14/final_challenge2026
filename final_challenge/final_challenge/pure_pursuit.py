@@ -30,7 +30,7 @@ class PurePursuit(Node):
         self.drive_topic = self.get_parameter('drive_topic').value
 
         self.wheelbase_length = 0.33 #in meters
-        self.base_speed = 2.0 
+        self.base_speed = 2.0
 
         self.target_point = None
 
@@ -57,7 +57,7 @@ class PurePursuit(Node):
             self.target_point = (
                 self.alpha * self.target_point[0] + (1 - self.alpha) * track_point[0],
                 self.alpha * self.target_point[1] + (1 - self.alpha) * track_point[1]
-            ) 
+            )
 
     def pose_callback(self, odometry_msg):
         """

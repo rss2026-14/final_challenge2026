@@ -2,70 +2,168 @@ import numpy as np
 import cv2
 import math as m
 from sympy import Point, Line
-img=cv2.imread('../../racetrack_images/lane_3/image16.png')
+
+img=cv2.imread('../../racetrack_images/lane_3/image53.png')
+lineimg=cv2.imread('../../racetrack_images/lane_3/image53.png')
+def line_x_at_y(line, y_query):
+    """
+    Given a Hough line [[x1, y1, x2, y2]], return the x position
+    where the line crosses y = y_query.
+    """
+    x1, y1, x2, y2 = line[0]
+
+    if abs(y2 - y1) < 1e-6:
+        return None
+
+    t = (y_query - y1) / float(y2 - y1)
+
+    # Allow small extrapolation, but reject lines that are too far away
+    if t < -0.5 or t > 1.5:
+        return None
+
+    return x1 + t * (x2 - x1)
+
+
 h, w = img.shape[:2]
 
 # Create black mask
-mask = np.zeros((h, w), dtype=np.uint8)
-top = int(h * 0.45)
-bottom = int(h * 0.95)
-left = int(w * 0.05)
-right = int(w * 0.95)
-mask[top:bottom, left:right] = 255
-masked = cv2.bitwise_and(img, img, mask=mask)
+roi_mask = np.zeros((h, w), dtype=np.uint8)
+
+# Trapezoid ROI: removes lots of irrelevant upper-image detections
+polygon = np.array([[
+    (int(0.0 * w), int(0.95 * h)),
+    (int(0.0 * w), int(0.45 * h)),
+    (int(1.0 * w), int(0.45 * h)),
+    (int(1.0 * w), int(0.95 * h)),
+]], dtype=np.int32)
+
+cv2.fillPoly(roi_mask, polygon, 255)
+masked_img = cv2.bitwise_and(img, img, mask=roi_mask)
 
 # Apply color mask
-hsv = cv2.cvtColor(masked, cv2.COLOR_RGB2HSV)
-lower_bound = np.array([0, 0, 130])
-upper_bound = np.array([180, 50, 255])
-track_mask = cv2.inRange(hsv, lower_bound, upper_bound)
-kernel = np.ones((3, 3), np.uint8)
-eroded = cv2.erode(track_mask, kernel, iterations=1)
-dilated = cv2.dilate(eroded, kernel, iterations=2)
-colormasked = cv2.bitwise_and(hsv, hsv, mask=dilated)
+hsv = cv2.cvtColor(masked_img, cv2.COLOR_BGR2HSV)
+
+# White line threshold
+lower_white = np.array([0, 0, 130])
+upper_white = np.array([180, 65, 255])
+white_mask = cv2.inRange(hsv, lower_white, upper_white)
+
+kernel = np.ones((5, 5), np.uint8)
+white_mask = cv2.erode(white_mask, kernel, iterations=1)
+white_mask = cv2.dilate(white_mask, kernel, iterations=2)
+colormasked = cv2.bitwise_and(hsv, hsv, mask=white_mask)
 
 # Find edges
-gray = cv2.cvtColor(colormasked, cv2.COLOR_RGB2GRAY)
-edges = cv2.Canny(gray, 100, 180)
-lines = cv2.HoughLinesP(edges, 1, np.pi/180, 68, minLineLength=80, maxLineGap=20)
+edges = cv2.Canny(white_mask, 80, 160)
 
-# only save lines with angle > 15 degrees
-Xs=[]
-linemask=[]
-if lines is not None:
-    for line in lines:
-        x1, y1, x2, y2 = line[0]
-        angle=m.atan(abs((y2-y1)/(x2-x1)))
-        if angle>(15*m.pi/180):
-            linemask.append(line)
-            Xs.append(x1)
-            Xs.append(x2)
+lines = cv2.HoughLinesP(
+    edges,
+    rho=1,
+    theta=np.pi / 180,
+    threshold=45,
+    minLineLength=30,
+    maxLineGap=25
+)
 
-# find left and right lanes
-if linemask is not None:
-    left=None
-    right=None
-    lanes=[]
-    for line in linemask:
-        x1, y1, x2, y2 = line[0]
-        if (x1==min(Xs) or x2==min(Xs)) and left is None:
-            left=Line(Point(x1,y1),Point(x2,y2))
-            lanes.append(line)
-            cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), 3)
-        if (x1==max(Xs) or x2==max(Xs)) and right is None:
-            right=Line(Point(x1,y1),Point(x2,y2))
-            lanes.append(line)
-            cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), 3)
+for line in lines:
+    x1, y1, x2, y2 = line[0]
+    cv2.line(lineimg, (x1, y1), (x2, y2), (255, 0, 0), 3)
 
-    intersection=left.intersection(right)
-    if intersection:
-        print(intersection[0].evalf())
-        px,py=intersection[0].evalf()
-        cv2.circle(img, (int(px), int(py)), 5, (0, 0, 255), -1)
+left_candidates = []
+right_candidates = []
+debug_lines = []
+
+image_center_x = w / 2.0
+
+# Pick a row to aim at. Larger y is closer to the robot.
+y_target = int(0.5 * h)
+
+for line in lines:
+    x1, y1, x2, y2 = line[0]
+
+    dx = x2 - x1
+    dy = y1 - y2
+
+    if abs(dx) < 1e-6:
+        continue
+
+    slope = dy / float(dx)
+    angle = abs(np.degrees(np.arctan2(dy, dx)))
+
+    # Reject nearly horizontal lines.
+    # These are usually crosswalk/intersection/stop-line-like markings.
+    if angle < 10:
+        continue
+
+    # Reject almost vertical tiny artifacts if needed.
+    if angle > 85:
+        continue
+
+    x_at_target = line_x_at_y(line, y_target)
+
+    if x_at_target is None:
+        continue
+
+    # Reject lines that cross too close to image center.
+    # This prevents the center white line from becoming the target.
+
+
+    debug_lines.append(line)
+
+    # In image coordinates, left lane usually has negative slope.
+    # Right lane usually has positive slope.
+    if slope > 0 and x_at_target < image_center_x:
+        left_candidates.append((line, x_at_target))
+    elif slope < 0 and x_at_target > image_center_x:
+        right_candidates.append((line, x_at_target))
+
+selected_lines = []
+
+left_x = None
+right_x = None
+x_target = 0.0
+
+if len(left_candidates) > 0:
+    # Choose the left line closest to the center, not the extreme outside line.
+    left_line, left_x = max(left_candidates, key=lambda item: item[1])
+    selected_lines.append(left_line)
+    print("left is not empty")
+
+if len(right_candidates) > 0:
+    # Choose the right line closest to the center, not the extreme outside line.
+    right_line, right_x = min(right_candidates, key=lambda item: item[1])
+    selected_lines.append(right_line)
+    print("right is not empty")
+
+# If both lane boundaries are visible, drive between them.
+if left_x is not None and right_x is not None:
+    x_target = int((left_x + right_x) / 2.0)
+    print("both not empty")
+
+# If only left boundary is visible, offset to the right by an estimated half lane width.
+elif left_x is not None:
+    estimated_lane_half_width_px = int(0.12 * w)
+    x_target = int(left_x + estimated_lane_half_width_px)
+
+# If only right boundary is visible, offset to the left by an estimated half lane width.
+elif right_x is not None:
+    estimated_lane_half_width_px = int(0.12 * w)
+    x_target = int(right_x - estimated_lane_half_width_px)
+
+
+# Clamp target inside image
+x_target = int(np.clip(x_target, 0, w - 1))
+y_target = int(np.clip(y_target, 0, h - 1))
+cv2.circle(img, (x_target, y_target), 5, (0, 0, 255), -1)
+
+for line in selected_lines:
+    x1, y1, x2, y2 = line[0]
+    cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), 3)
 
 colormasked = cv2.cvtColor(colormasked, cv2.COLOR_HSV2RGB)
 cv2.imshow("Image", img)
-#cv2.imshow("Masked", masked)
-#cv2.imshow("Color Masked", colormasked)
+cv2.imshow("All lines", lineimg)
+cv2.imshow("Masked", masked_img)
+cv2.imshow("Color Masked", colormasked)
 cv2.waitKey(0)
 cv2.destroyAllWindows()

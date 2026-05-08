@@ -120,7 +120,7 @@ def cd_color_segmentation(img):
 
         # Reject lines that cross too close to image center.
         # This prevents the center white line from becoming the target.
-        
+
 
         debug_lines.append(line)
 
