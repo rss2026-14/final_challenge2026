@@ -226,7 +226,9 @@ class MeterSearchController(Node):
             return
 
         if self.phase == SearchPhase.APPROACH_WALL:
-            self.approach_wall()
+            # self.approach_wall()
+            self.set_phase(SearchPhase.PAUSE_BEFORE_REVERSE)
+            pass
 
         elif self.phase == SearchPhase.PAUSE_BEFORE_REVERSE:
             self.pause_before_reverse()
