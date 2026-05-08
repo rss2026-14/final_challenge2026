@@ -402,9 +402,16 @@ class BoatingExecutive(Node):
         self.all_goals = [] # Track all goals to reverse them later
         self.current_goal = None
         self.is_returning = False # Flag for the return trip
+        self.waiting_for_next_outbound_goal = False
 
         self.turn_start_time = None
         self.last_goal_publish_time = 0.0
+        self.declare_parameter("min_outbound_goals", 2)
+        self.min_outbound_goals = (
+            self.get_parameter("min_outbound_goals")
+            .get_parameter_value()
+            .integer_value
+        )
 
         self.declare_parameter("parking_attempt_limit", 2)
         self.parking_attempt_limit = (
@@ -512,6 +519,10 @@ class BoatingExecutive(Node):
             self.get_logger().info(
                 f"Goal received. Starting navigation. {len(self.goals)} goals left in queue."
             )
+        elif self.waiting_for_next_outbound_goal and self.state == State.NAVIGATING:
+            self.get_logger().info("Next outbound goal received. Continuing navigation.")
+            self.waiting_for_next_outbound_goal = False
+            self.handle_goal_reached()
 
     def parking_success_callback(self, msg: Bool):
         pass # Ignored for now
@@ -529,6 +540,16 @@ class BoatingExecutive(Node):
             self.set_state(State.NAVIGATING)
         else:
             if not self.is_returning:
+                if len(self.all_goals) < self.min_outbound_goals:
+                    self.waiting_for_next_outbound_goal = True
+                    self.get_logger().info(
+                        "Reached current goal, but waiting for another outbound goal "
+                        f"before starting 3-point turn ({len(self.all_goals)}/"
+                        f"{self.min_outbound_goals} received)."
+                    )
+                    self.hit_the_brakes()
+                    return
+
                 self.get_logger().info("Reached final outbound goal. Executing 3-point turn.")
                 self.set_state(State.THREE_POINT_TURN)
             else:
@@ -573,10 +594,14 @@ class BoatingExecutive(Node):
                     self.last_goal_publish_time = time.time()
 
             self.state_just_changed = False
+            if self.waiting_for_next_outbound_goal:
+                self.hit_the_brakes()
+                return
+
             dist = self.distance_to_goal()
 
-            if dist < 1.0:
-                self.get_logger().info(f"Within 1.0m of goal. Distance: {dist:.2f}.")
+            if dist < 0.15:
+                self.get_logger().info(f"Within 0.15m of goal. Distance: {dist:.2f}.")
                 self.handle_goal_reached()
 
         elif self.state == State.THREE_POINT_TURN:
@@ -643,6 +668,10 @@ class BoatingExecutive(Node):
         self.drive_pub.publish(drive_cmd)
 
     def set_state(self, new_state):
+        if new_state == self.state:
+            self.state_just_changed = True
+            return
+
         # Updated allowed transitions map to include the turn sequence
         allowed = {
             State.WAITING: [State.NAVIGATING],
