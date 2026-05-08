@@ -10,13 +10,24 @@ import math as m
 #  v  This is the image. Y increases downwards, X increases rightwards
 ###############################################################
 
+def extend_line(line,h):
+    """
+    Given a Hough line [[x1, y1, x2, y2]], return a line spanning the image height
+    """
+    x1, y1, x2, y2 = line[0]
+
+    m=(y2-y1)/(x2-x1)
+    x0=-y1/m+x1
+    x3=(h-y1)/m+x1
+
+    return [x0, 0.0, x3, h]
 
 def line_x_at_y(line, y_query):
     """
     Given a Hough line [[x1, y1, x2, y2]], return the x position
     where the line crosses y = y_query.
     """
-    x1, y1, x2, y2 = line[0]
+    x1, y1, x2, y2 = line
 
     if abs(y2 - y1) < 1e-6:
         return None
@@ -94,7 +105,7 @@ def cd_color_segmentation(img):
 
     for line in lines:
         x1, y1, x2, y2 = line[0]
-
+        x0,y0,x3,y3=extend_line(line,h)
         dx = x2 - x1
         dy = y1 - y2
 
@@ -113,7 +124,7 @@ def cd_color_segmentation(img):
         if angle > 85:
             continue
 
-        x_at_target = line_x_at_y(line, y_target)
+        x_at_target = line_x_at_y([x0,y0,x3,y3], y_target)
 
         if x_at_target is None:
             continue
