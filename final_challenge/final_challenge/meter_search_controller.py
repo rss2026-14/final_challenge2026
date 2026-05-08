@@ -43,7 +43,7 @@ class MeterSearchController(Node):
         self.declare_parameter("far_wall_distance", 1.0)
 
         self.declare_parameter("approach_speed", 0.9)
-        self.declare_parameter("back_up_speed", -0.9)
+        self.declare_parameter("back_up_speed", -1.0)
         self.declare_parameter("k_turn_speed", 0.9)
 
         self.declare_parameter("max_steering_angle", 0.34)
@@ -54,7 +54,7 @@ class MeterSearchController(Node):
 
         self.declare_parameter("forward_search_angle", math.pi / 4.0)
 
-        self.declare_parameter("k_turn_forward_duration", 1.0)
+        self.declare_parameter("k_turn_forward_duration", 0.75)
         self.declare_parameter("k_turn_reverse_duration", 1.5)
 
         self.declare_parameter("reverse_pause_duration", 1.0)
