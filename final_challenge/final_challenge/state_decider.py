@@ -41,6 +41,12 @@ class BoatingExecutive(Node):
         self.reverse_start_time = None
         self.last_goal_publish_time = 0.0
 
+        self.declare_parameter("skip_parking_at_last_goal", False)
+        self.skip_parking_at_last_goal = (
+            self.get_parameter("skip_parking_at_last_goal")
+            .get_parameter_value()
+            .bool_value
+        )
         self.declare_parameter("meter_search_speed", 1.0)
         self.declare_parameter("meter_search_steering_angle", 0.34)
         self.meter_search_speed = (
@@ -119,6 +125,12 @@ class BoatingExecutive(Node):
             self.trajectory_reached_callback,
             10
         )
+        self.create_subscription(
+            Bool,
+            "/reverse_complete",
+            self.reverse_complete_callback,
+            10
+        )
 
         self.timer = self.create_timer(0.1, self.loop)
 
@@ -161,10 +173,36 @@ class BoatingExecutive(Node):
 
     def trajectory_reached_callback(self, msg: Bool):
         if msg.data and self.state == State.NAVIGATING:
+            if self.should_skip_parking_for_current_goal():
+                self.get_logger().info(
+                    "Trajectory follower reported final return goal reached. Skipping parking."
+                )
+                self.set_state(State.DONE)
+                return
+
             self.get_logger().info(
                 "Trajectory follower reported goal reached. Starting meter search."
             )
             self.set_state(State.METER_SEARCH)
+
+    def reverse_complete_callback(self, msg: Bool):
+        if not msg.data or self.state != State.REVERSE:
+            return
+
+        self.hit_the_brakes()
+
+        if len(self.goals) > 0:
+            self.current_goal = self.goals.pop(0)
+
+            self.get_logger().info(
+                f"Reverse maneuver complete. Moving to next goal. {len(self.goals)} goals left."
+            )
+
+            self.set_state(State.NAVIGATING)
+
+        else:
+            self.get_logger().info("Reverse maneuver complete. Course complete.")
+            self.set_state(State.DONE)
 
     def traffic_light_obstacle_callback(self, msg: Bool):
         self.traffic_light_obstacle = msg.data
@@ -214,6 +252,13 @@ class BoatingExecutive(Node):
             dist = self.distance_to_goal()
 
             if dist < 1.0:
+                if self.should_skip_parking_for_current_goal():
+                    self.get_logger().info(
+                        f"Within 1.0m of final return goal. Distance: {dist:.2f}. Skipping parking."
+                    )
+                    self.set_state(State.DONE)
+                    return
+
                 self.get_logger().info(
                     f"Within 1.0m of goal. Distance: {dist:.2f}. Starting meter search."
                 )
@@ -256,29 +301,7 @@ class BoatingExecutive(Node):
                 #     self.publish_drive_command(-0.7, 0.0)
 
         elif self.state == State.REVERSE:
-
-            elapsed_reverse = (
-                self.get_clock().now() - self.reverse_start_time
-            ).nanoseconds * 1e-9
-
-            if elapsed_reverse < 5.0:
-                self.publish_drive_command(-1.0, 0.0)
-
-            else:
-                self.hit_the_brakes()
-
-                if len(self.goals) > 0:
-                    self.current_goal = self.goals.pop(0)
-
-                    self.get_logger().info(
-                        f"Moving to next goal. {len(self.goals)} goals left."
-                    )
-
-                    self.set_state(State.NAVIGATING)
-
-                else:
-                    self.get_logger().info("Course complete.")
-                    self.set_state(State.DONE)
+            pass
 
         elif self.state == State.OBSTACLE_PAUSE:
             self.hit_the_brakes()
@@ -302,6 +325,9 @@ class BoatingExecutive(Node):
 
         return math.sqrt(dx**2 + dy**2)
 
+    def should_skip_parking_for_current_goal(self):
+        return self.skip_parking_at_last_goal and len(self.goals) == 0
+
     def hit_the_brakes(self):
         self.publish_drive_command(0.0, 0.0)
 
@@ -317,7 +343,7 @@ class BoatingExecutive(Node):
     def set_state(self, new_state):
         allowed = {
             State.WAITING: [State.NAVIGATING],
-            State.NAVIGATING: [State.METER_SEARCH, State.OBSTACLE_PAUSE],
+            State.NAVIGATING: [State.METER_SEARCH, State.OBSTACLE_PAUSE, State.DONE],
             State.METER_SEARCH: [State.PARKING, State.OBSTACLE_PAUSE, State.DONE],
             State.PARKING: [State.PARKED, State.OBSTACLE_PAUSE],
             State.PARKED: [State.REVERSE],

@@ -31,6 +31,7 @@ setup(
             'boating_executive = final_challenge.state_decider:main',
             'meter_search_controller = final_challenge.meter_search_controller:main',
             'parking_meter_controller = final_challenge.parking_meter_controller:main',
+            'reverse_controller = final_challenge.reverse_controller:main',
             'traffic_light_controller = final_challenge.traffic_light_controller:main',
             'traffic_light_color_detector = final_challenge.traffic_light_color_detector:main',
             'yolo_final_challenge = final_challenge.yolo_final_challenge:main',

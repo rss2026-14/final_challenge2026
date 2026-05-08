@@ -1,5 +1,6 @@
 <launch>
     <node pkg="final_challenge" exec="boating_executive" name="boating_executive" output="screen">
+        <param name="skip_parking_at_last_goal" value="true" />
     </node>
 
     <node pkg="path_planning" exec="trajectory_planner" name="trajectory_planner" output="screen">
@@ -27,6 +28,10 @@
     <node pkg="final_challenge" name="meter_search_controller" exec="meter_search_controller" output="screen">
         <param name="drive_topic" value="/vesc/high_level/input/nav_0" />
         <param name="scan_topic" value="/scan" />
+    </node>
+
+    <node pkg="final_challenge" name="reverse_controller" exec="reverse_controller" output="screen">
+        <param name="drive_topic" value="/vesc/high_level/input/nav_0" />
     </node>
 
     <node pkg="final_challenge" name="homography_transform" exec="homography_transform" output="screen">
