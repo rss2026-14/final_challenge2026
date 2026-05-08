@@ -30,10 +30,6 @@
         <param name="max_k_turn_cycles" value="1" />
     </node>
 
-    <node pkg="final_challenge" name="reverse_controller" exec="reverse_controller" output="screen">
-        <param name="drive_topic" value="/vesc/input/navigation" />
-    </node>
-
     <node pkg="final_challenge" name="homography_transform" exec="homography_transform" output="screen">
     </node>
 
