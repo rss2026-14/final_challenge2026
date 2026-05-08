@@ -20,14 +20,30 @@
     </node>
 
     <node pkg="final_challenge" name="parking_meter_controller" exec="parking_meter_controller" output="screen">
-        <param name="drive_topic" value="/vesc/low_level/input/navigation" />
+        <param name="drive_topic" value="/vesc/high_level/input/nav_0" />
     </node>
-<!--
-    PARKING METER YOLO DETECTOR PIXEL PUBLISH THING
-    <node pkg="visual_servoing" name="cone_detector" exec="cone_detector" output="screen">
-    </node>  -->
-<!--
-    <node pkg="visual_servoing" name="homography_transformer" exec="homography_transformer" output="screen">
-    </node> -->
 
-    </launch>
+    <node pkg="final_challenge" name="meter_search_controller" exec="meter_search_controller" output="screen">
+        <param name="drive_topic" value="/vesc/high_level/input/nav_0" />
+        <param name="scan_topic" value="/scan" />
+    </node>
+
+    <node pkg="final_challenge" name="homography_transform" exec="homography_transform" output="screen">
+    </node>
+
+    <node pkg="final_challenge" name="traffic_light_controller" exec="traffic_light_controller" output="screen">
+    </node>
+
+    <node pkg="final_challenge" name="traffic_light_color_detector" exec="traffic_light_color_detector" output="screen">
+    </node>
+
+    <node pkg="final_challenge" name="yolo_final_challenge" exec="yolo_final_challenge" output="log">
+        <param name="image_queue_size" value="1" />
+        <param name="inference_period_sec" value="0.25" />
+        <param name="publish_annotated_image" value="false" />
+        <param name="log_detections" value="false" />
+        <param name="stop_after_first_detection" value="false" />
+        <param name="lock_target_class" value="parking meter" />
+    </node>
+
+</launch>
