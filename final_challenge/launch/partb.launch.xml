@@ -10,7 +10,7 @@
 
     <node pkg="path_planning" exec="trajectory_follower" name="trajectory_follower" output="screen">
         <param from="$(find-pkg-share path_planning)/config/real/config.yaml"/>
-        <param name="drive_topic" value="/vesc/high_level/input/nav_0" />
+        <param name="drive_topic" value="/vesc/input/navigation" />
     </node>
 
     <node pkg="localization" exec="particle_filter" name="particle_filter" output="screen">
@@ -22,17 +22,17 @@
     </node>
 
     <node pkg="final_challenge" name="parking_meter_controller" exec="parking_meter_controller" output="screen">
-        <param name="drive_topic" value="/vesc/high_level/input/nav_0" />
+        <param name="drive_topic" value="/vesc/input/navigation" />
     </node>
 
     <node pkg="final_challenge" name="meter_search_controller" exec="meter_search_controller" output="screen">
-        <param name="drive_topic" value="/vesc/high_level/input/nav_0" />
+        <param name="drive_topic" value="/vesc/input/navigation" />
         <param name="scan_topic" value="/scan" />
         <param name="max_k_turn_cycles" value="1" />
     </node>
 
     <node pkg="final_challenge" name="reverse_controller" exec="reverse_controller" output="screen">
-        <param name="drive_topic" value="/vesc/high_level/input/nav_0" />
+        <param name="drive_topic" value="/vesc/input/navigation" />
     </node>
 
     <node pkg="final_challenge" name="homography_transform" exec="homography_transform" output="screen">

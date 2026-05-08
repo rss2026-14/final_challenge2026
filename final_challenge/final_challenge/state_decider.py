@@ -168,10 +168,19 @@ class BoatingExecutive(Node):
 
     def meter_search_failed_callback(self, msg: Bool):
         if msg.data and self.state == State.METER_SEARCH:
-            self.get_logger().warn(
-                "Meter search failed. Skipping parking at this goal and recovering to the path."
-            )
-            self.set_state(State.REVERSE)
+            self.hit_the_brakes()
+
+            if len(self.goals) > 0:
+                self.current_goal = self.goals.pop(0)
+                self.get_logger().warn(
+                    f"Meter search failed. Skipping parking at this goal and navigating to next goal. {len(self.goals)} goals left."
+                )
+                self.set_state(State.NAVIGATING)
+            else:
+                self.get_logger().warn(
+                    "Meter search failed at final goal. Recovering with reverse maneuver."
+                )
+                self.set_state(State.REVERSE)
 
     def trajectory_reached_callback(self, msg: Bool):
         if msg.data and self.state == State.NAVIGATING:
@@ -346,7 +355,7 @@ class BoatingExecutive(Node):
         allowed = {
             State.WAITING: [State.NAVIGATING],
             State.NAVIGATING: [State.METER_SEARCH, State.OBSTACLE_PAUSE, State.DONE],
-            State.METER_SEARCH: [State.PARKING, State.REVERSE, State.OBSTACLE_PAUSE, State.DONE],
+            State.METER_SEARCH: [State.PARKING, State.NAVIGATING, State.REVERSE, State.OBSTACLE_PAUSE, State.DONE],
             State.PARKING: [State.PARKED, State.OBSTACLE_PAUSE],
             State.PARKED: [State.REVERSE],
             State.REVERSE: [State.NAVIGATING, State.DONE],
