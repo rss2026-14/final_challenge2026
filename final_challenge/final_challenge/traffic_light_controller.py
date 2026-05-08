@@ -23,7 +23,7 @@ class TrafficLightController(Node):
     def __init__(self):
         super().__init__("traffic_light_controller")
 
-        self.declare_parameter("red_timeout", 2.0)
+        self.declare_parameter("red_timeout", 1.0)
         self.declare_parameter("min_red_detections", 1)
         self.declare_parameter("log_debug", False)
 
