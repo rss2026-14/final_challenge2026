@@ -41,7 +41,7 @@ class BoatingExecutive(Node):
         self.reverse_start_time = None
         self.last_goal_publish_time = 0.0
 
-        self.declare_parameter("skip_parking_at_last_goal", False)
+        self.declare_parameter("skip_parking_at_last_goal", True)
         self.skip_parking_at_last_goal = (
             self.get_parameter("skip_parking_at_last_goal")
             .get_parameter_value()
@@ -168,8 +168,10 @@ class BoatingExecutive(Node):
 
     def meter_search_failed_callback(self, msg: Bool):
         if msg.data and self.state == State.METER_SEARCH:
-            self.get_logger().warn("Meter search failed. Ending mission.")
-            self.set_state(State.DONE)
+            self.get_logger().warn(
+                "Meter search failed. Skipping parking at this goal and recovering to the path."
+            )
+            self.set_state(State.REVERSE)
 
     def trajectory_reached_callback(self, msg: Bool):
         if msg.data and self.state == State.NAVIGATING:
@@ -344,7 +346,7 @@ class BoatingExecutive(Node):
         allowed = {
             State.WAITING: [State.NAVIGATING],
             State.NAVIGATING: [State.METER_SEARCH, State.OBSTACLE_PAUSE, State.DONE],
-            State.METER_SEARCH: [State.PARKING, State.OBSTACLE_PAUSE, State.DONE],
+            State.METER_SEARCH: [State.PARKING, State.REVERSE, State.OBSTACLE_PAUSE, State.DONE],
             State.PARKING: [State.PARKED, State.OBSTACLE_PAUSE],
             State.PARKED: [State.REVERSE],
             State.REVERSE: [State.NAVIGATING, State.DONE],

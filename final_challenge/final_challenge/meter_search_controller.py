@@ -59,7 +59,7 @@ class MeterSearchController(Node):
 
         self.declare_parameter("reverse_pause_duration", 1.0)
 
-        self.declare_parameter("max_k_turn_cycles", 8)
+        self.declare_parameter("max_k_turn_cycles", 1)
 
         self.scan_topic = self.get_parameter("scan_topic").value
         self.drive_topic = self.get_parameter("drive_topic").value
@@ -376,7 +376,7 @@ class MeterSearchController(Node):
         self.failure_sent = True
 
         self.get_logger().warn(
-            "Meter search failed after K-turn attempts."
+            "Meter search failed after one search rotation."
         )
 
     def publish_drive_command(self, speed, steering_angle):
