@@ -16,7 +16,13 @@ def extend_line(line,h):
     """
     x1, y1, x2, y2 = line[0]
 
+    if abs(x2 - x1) < 1e-6:
+        return None
+
     m=(y2-y1)/(x2-x1)
+    if abs(m) < 1e-6:
+        return None
+
     x0=-y1/m+x1
     x3=(h-y1)/m+x1
 
@@ -105,7 +111,11 @@ def cd_color_segmentation(img):
 
     for line in lines:
         x1, y1, x2, y2 = line[0]
-        x0,y0,x3,y3=extend_line(line,h)
+        extended_line = extend_line(line,h)
+        if extended_line is None:
+            continue
+
+        x0,y0,x3,y3=extended_line
         dx = x2 - x1
         dy = y1 - y2
 
@@ -165,8 +175,21 @@ def cd_color_segmentation(img):
 
     # If both lane boundaries are visible, drive between them.
     if left_x is not None and right_x is not None:
-        x_target = int((left_x + right_x) / 2.0)
-        print("both not empty")
+        lane_width = right_x - left_x
+        min_lane_width_px = 0.14 * w
+        max_lane_width_px = 0.42 * w
+
+        if min_lane_width_px <= lane_width <= max_lane_width_px:
+            x_target = int((left_x + right_x) / 2.0)
+            print("both not empty")
+        elif abs(left_x - image_center_x) < abs(right_x - image_center_x):
+            estimated_lane_half_width_px = int(0.12 * w)
+            x_target = int(left_x + estimated_lane_half_width_px)
+            selected_lines = selected_lines[:1]
+        else:
+            estimated_lane_half_width_px = int(0.12 * w)
+            x_target = int(right_x - estimated_lane_half_width_px)
+            selected_lines = selected_lines[-1:]
 
     # If only left boundary is visible, offset to the right by an estimated half lane width.
     elif left_x is not None:

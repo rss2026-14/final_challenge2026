@@ -24,6 +24,26 @@ class TrackDetector(Node):
     def __init__(self):
         super().__init__("track_detector")
 
+        self.declare_parameter("target_smoothing_alpha", 0.9)
+        self.declare_parameter("max_target_jump_ratio", 0.12)
+        self.declare_parameter("max_center_offset_ratio", 0.35)
+        self.target_smoothing_alpha = (
+            self.get_parameter("target_smoothing_alpha")
+            .get_parameter_value()
+            .double_value
+        )
+        self.max_target_jump_ratio = (
+            self.get_parameter("max_target_jump_ratio")
+            .get_parameter_value()
+            .double_value
+        )
+        self.max_center_offset_ratio = (
+            self.get_parameter("max_center_offset_ratio")
+            .get_parameter_value()
+            .double_value
+        )
+        self.filtered_target = None
+
         # Subscribe to ZED camera RGB frames
         self.track_pub = self.create_publisher(ConeLocationPixel, "/relative_track_px", 10)
         self.debug_pub = self.create_publisher(Image, "/track_debug_img", 10)
@@ -61,8 +81,42 @@ class TrackDetector(Node):
         if drive_point is not None:
             x, y, lines = drive_point
 
-            x = int(x)
-            y = int(y)
+            measured_target = np.array([float(x), float(y)])
+            max_jump_px = self.max_target_jump_ratio * w
+            max_center_offset_px = self.max_center_offset_ratio * w
+            center_offset = abs(measured_target[0] - (w / 2.0))
+
+            if center_offset > max_center_offset_px:
+                self.get_logger().warn(
+                    f"Ignoring lane target {center_offset:.1f}px from image center "
+                    f"(limit {max_center_offset_px:.1f}px)"
+                )
+                drive_point = None
+
+            if drive_point is not None and self.filtered_target is None:
+                self.filtered_target = measured_target
+            elif drive_point is not None:
+                jump = np.linalg.norm(measured_target - self.filtered_target)
+                if jump <= max_jump_px:
+                    self.filtered_target = (
+                        self.target_smoothing_alpha * self.filtered_target
+                        + (1.0 - self.target_smoothing_alpha) * measured_target
+                    )
+                else:
+                    self.get_logger().warn(
+                        f"Ignoring lane target jump of {jump:.1f}px "
+                        f"(limit {max_jump_px:.1f}px)"
+                    )
+
+            if self.filtered_target is None:
+                track_px_msg.u = -1.0
+                track_px_msg.v = -1.0
+                self.get_logger().info("No stable track target yet")
+                self.track_pub.publish(track_px_msg)
+                return
+
+            x = int(self.filtered_target[0])
+            y = int(self.filtered_target[1])
 
             track_px_msg.u = float(x)
             track_px_msg.v = float(y)
