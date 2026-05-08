@@ -101,7 +101,7 @@ def cd_color_segmentation(img):
     image_center_x = w / 2.0
 
     # Pick a row to aim at. Larger y is closer to the robot.
-    y_target = int(0.4 * h)
+    y_target = int(0.5 * h)
 
     for line in lines:
         x1, y1, x2, y2 = line[0]
