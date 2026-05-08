@@ -43,7 +43,7 @@ class MeterSearchController(Node):
         self.declare_parameter("far_wall_distance", 1.0)
 
         self.declare_parameter("approach_speed", 0.9)
-        self.declare_parameter("back_up_speed", -0.9)
+        self.declare_parameter("back_up_speed", -1.0)
         self.declare_parameter("k_turn_speed", 0.9)
 
         self.declare_parameter("max_steering_angle", 0.34)
@@ -59,7 +59,7 @@ class MeterSearchController(Node):
 
         self.declare_parameter("reverse_pause_duration", 1.0)
 
-        self.declare_parameter("max_k_turn_cycles", 8)
+        self.declare_parameter("max_k_turn_cycles", 7)
 
         self.scan_topic = self.get_parameter("scan_topic").value
         self.drive_topic = self.get_parameter("drive_topic").value
