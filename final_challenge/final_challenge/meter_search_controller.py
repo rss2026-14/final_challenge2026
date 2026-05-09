@@ -277,7 +277,7 @@ class MeterSearchController(Node):
         elapsed = self.now_sec() - self.phase_start_time
 
         if elapsed >= self.reverse_pause_duration:
-            self.set_phase(SearchPhase.BACK_UP)
+            self.set_phase(SearchPhase.K_TURN_REVERSE)
 
     def back_up_from_wall(self):
         if self.closest_wall_distance is None:
