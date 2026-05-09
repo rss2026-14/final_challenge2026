@@ -273,7 +273,7 @@ class BoatingExecutive(Node):
             self.set_state(State.THREE_POINT_TURN)
         else:
             self.get_logger().info("Returned to start point. Mission complete.")
-            self.set_state(State.DONE)
+            # self.set_state(State.DONE)
 
     def traffic_light_obstacle_callback(self, msg: Bool):
         self.traffic_light_obstacle = msg.data
