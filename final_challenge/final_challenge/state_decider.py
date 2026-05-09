@@ -227,7 +227,7 @@ class BoatingExecutive(Node):
 
     def parking_meter_callback(self, msg: ConeLocation):
         if self.state == State.METER_SEARCH:
-            self.get_logger().info("Meter detected! (Parking disabled). Resuming route.")
+            self.get_logger().info("Meter detected!. Resuming route.")
             # self.resume_route_after_search()
             self.set_state(State.PARKING)
 
@@ -534,7 +534,7 @@ class BoatingExecutive(Node):
             State.PARKING: [
                 State.PARKED,
             ],
-            State.PARKED: [             # <--- Update Parked
+            State.PARKED: [
                 State.NAVIGATING,
                 State.THREE_POINT_TURN,
                 State.DONE
