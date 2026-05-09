@@ -28,8 +28,9 @@ class State(Enum):
     METER_SEARCH = 4
     PARKING = 5
     PARKED = 6
-    DONE = 7
-    THREE_POINT_TURN = 8
+    REVERSE_AFTER_PARK = 7
+    DONE = 8
+    THREE_POINT_TURN = 9
 
 
 class BoatingExecutive(Node):
@@ -249,7 +250,7 @@ class BoatingExecutive(Node):
 
     def parking_meter_callback(self, msg: ConeLocation):
         if self.state == State.METER_SEARCH:
-            self.get_logger().info("Meter detected! (Parking disabled). Resuming route.")
+            self.get_logger().info("Meter detected!. Resuming route.")
             # self.resume_route_after_search()
             self.set_state(State.PARKING)
 
@@ -312,8 +313,8 @@ class BoatingExecutive(Node):
             # self.set_state(State.DONE)
 
     def resume_route_after_search(self):
-        if self.state != State.METER_SEARCH:
-            return
+        # if self.state != State.METER_SEARCH:
+        #     return
 
         # If we have more outbound goals to visit
         if self.route_index < len(self.route_goals) - 1:
@@ -476,10 +477,24 @@ class BoatingExecutive(Node):
 
                 if elapsed >= self.parked_duration:
                     self.get_logger().info(
-                        f"Done waiting {self.parked_duration}s. Resuming mission."
+                        f"Done waiting {self.parked_duration}s. "
                     )
                     self.parked_start_time = None
-                    self.resume_route_after_search()
+                    # self.resume_route_after_search()
+                    self.set_state(State.REVERSE_AFTER_PARK)
+
+        elif self.state == State.REVERSE_AFTER_PARK:
+            self.publish_drive_command(-1.0, 0.0)
+
+            elapsed = (
+                self.get_clock().now() - self.reverse_start_time
+            ).nanoseconds * 1e-9
+
+            if elapsed > 2.0:
+                self.get_logger().info("Reverse complete. Resuming navigation.")
+                self.hit_the_brakes()
+                self.set_state(State.NAVIGATING)
+
 
         elif self.state == State.DONE:
             self.hit_the_brakes()
@@ -588,7 +603,11 @@ class BoatingExecutive(Node):
             State.PARKING: [
                 State.PARKED,
             ],
-            State.PARKED: [             # <--- Update Parked
+            State.PARKED: [
+                State.REVERSE_AFTER_PARK,
+                State.DONE
+            ],
+            State.REVERSE_AFTER_PARK: [
                 State.NAVIGATING,
                 State.THREE_POINT_TURN,
                 State.DONE
@@ -610,6 +629,9 @@ class BoatingExecutive(Node):
 
         if new_state == State.PARKED:
             self.parked_start_time = self.get_clock().now()
+
+        if new_state == State.REVERSE_AFTER_PARK:
+            self.reverse_start_time = self.get_clock().now()
 
         self.get_logger().info(f"{self.state.name} -> {new_state.name}")
 
