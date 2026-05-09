@@ -356,7 +356,7 @@ class BoatingExecutive(Node):
                 self.publish_drive_command(-1.0, -0.34)
 
             elif elapsed < 7.0:
-                self.publish_drive_command(1.0, 0.34)
+                self.publish_drive_command(0.8, 0.34)
 
             else:
                 self.hit_the_brakes()
