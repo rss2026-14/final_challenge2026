@@ -224,9 +224,17 @@ class BoatingExecutive(Node):
         pass
 
     def trajectory_reached_callback(self, msg: Bool):
+        # if msg.data and self.state == State.NAVIGATING:
+        #     self.get_logger().info("Trajectory follower reported goal reached.")
+        #     self.advance_to_next_route_point()
         if msg.data and self.state == State.NAVIGATING:
-            self.get_logger().info("Trajectory follower reported goal reached.")
-            self.advance_to_next_route_point()
+            if self.is_returning:
+                # If we get a reached signal while returning, the mission is over.
+                self.get_logger().info("Returned to start point. Mission complete.")
+                self.set_state(State.DONE)
+            else:
+                self.get_logger().info("Trajectory follower reported goal reached.")
+                self.advance_to_next_route_point()
 
     def advance_to_next_route_point(self):
         if self.state != State.NAVIGATING:
@@ -294,19 +302,35 @@ class BoatingExecutive(Node):
             self.hit_the_brakes()
 
         elif self.state == State.NAVIGATING:
-            if self.state_just_changed or time.time() - self.last_goal_publish_time > 2.0:
-                self.publish_current_goal()
+            # if self.state_just_changed or time.time() - self.last_goal_publish_time > 2.0:
+            #     self.publish_current_goal()
+
+            # self.state_just_changed = False
+
+            # dist = self.distance_to_goal()
+
+            # if dist < self.goal_reach_distance:
+            #     self.get_logger().info(
+            #         f"Within {self.goal_reach_distance:.2f}m of current goal. "
+            #         f"Distance: {dist:.2f}."
+            #     )
+            #     self.advance_to_next_route_point()
+
+            if not self.is_returning:
+                # Outbound: Publish goals and check distance
+                if self.state_just_changed or time.time() - self.last_goal_publish_time > 2.0:
+                    self.publish_current_goal()
+
+                dist = self.distance_to_goal()
+
+                if dist < self.goal_reach_distance:
+                    self.get_logger().info(
+                        f"Within {self.goal_reach_distance:.2f}m of current goal. "
+                        f"Distance: {dist:.2f}."
+                    )
+                    self.advance_to_next_route_point()
 
             self.state_just_changed = False
-
-            dist = self.distance_to_goal()
-
-            if dist < self.goal_reach_distance:
-                self.get_logger().info(
-                    f"Within {self.goal_reach_distance:.2f}m of current goal. "
-                    f"Distance: {dist:.2f}."
-                )
-                self.advance_to_next_route_point()
 
         elif self.state == State.THREE_POINT_TURN:
             if self.turn_start_time is None:
@@ -342,6 +366,8 @@ class BoatingExecutive(Node):
 
             else:
                 self.hit_the_brakes()
+
+                self.is_returning = True
 
                 self.get_logger().info(
                     "Three-point turn complete. Building return route."
