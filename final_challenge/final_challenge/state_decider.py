@@ -329,27 +329,27 @@ class BoatingExecutive(Node):
                     "Three-point turn complete. Building return route."
                 )
 
-                self.is_returning = True
+                #self.is_returning = True
 
-                # start_and_goal_points = [start, goal_1, goal_2, ..., final_goal]
-                # Robot is currently at final_goal, so return through everything before it:
-                # [previous_goal, ..., goal_1, start]
-                self.route_goals = list(reversed(self.start_and_goal_points[:-1]))
-                self.route_index = 0
+                ## start_and_goal_points = [start, goal_1, goal_2, ..., final_goal]
+                ## Robot is currently at final_goal, so return through everything before it:
+                ## [previous_goal, ..., goal_1, start]
+                #self.route_goals = list(reversed(self.start_and_goal_points[:-1]))
+                #self.route_index = 0
 
-                if len(self.route_goals) > 0:
-                    self.current_goal = self.route_goals[self.route_index]
-                    self.set_state(State.NAVIGATING)
-                    self.publish_current_goal()
+                #if len(self.route_goals) > 0:
+                #   self.current_goal = self.route_goals[self.route_index]
+                #   self.set_state(State.NAVIGATING)
+                #   self.publish_current_goal()
 
-                    self.get_logger().info(
-                        f"Beginning return route with {len(self.route_goals)} points."
-                    )
-                else:
-                    self.get_logger().warn(
-                        "No return route points available. Ending mission."
-                    )
-                    self.set_state(State.DONE)
+                #    self.get_logger().info(
+                #        f"Beginning return route with {len(self.route_goals)} points."
+                #    )
+                #else:
+                #    self.get_logger().warn(
+                #        "No return route points available. Ending mission."
+                #    )
+                #    self.set_state(State.DONE)
 
         elif self.state == State.OBSTACLE_PAUSE:
             self.hit_the_brakes()
