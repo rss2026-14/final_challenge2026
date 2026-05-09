@@ -42,7 +42,7 @@ class MeterSearchController(Node):
         self.declare_parameter("near_wall_distance", 0.5)
         self.declare_parameter("far_wall_distance", 1.0)
 
-        self.declare_parameter("approach_speed", 0.9)
+        self.declare_parameter("approach_speed", 0.7)
         self.declare_parameter("back_up_speed", -1.0)
         self.declare_parameter("k_turn_speed", 0.9)
 
