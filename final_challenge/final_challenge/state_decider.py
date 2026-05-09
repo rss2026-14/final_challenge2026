@@ -332,7 +332,7 @@ class BoatingExecutive(Node):
                 self.hit_the_brakes()
 
                 self.get_logger().info(
-                    "Three-point turn complete. Building return route."
+                    "Three-point turn complete."
                 )
 
                 #self.is_returning = True
