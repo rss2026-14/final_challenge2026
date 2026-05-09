@@ -326,7 +326,13 @@ class BoatingExecutive(Node):
 
             elif elapsed < 4.0:
                 # Phase 3: forward straight
-                self.publish_drive_command(1.0, 0.0)
+                self.publish_drive_command(1.0, 0.34)
+
+            elif elapsed < 5.5:
+                self.publish_drive_command(-1.0, -0.34)
+
+            elif elapsed < 6.5:
+                self.publish_drive_command(1.0, 0.34)
 
             else:
                 self.hit_the_brakes()
