@@ -490,7 +490,7 @@ class BoatingExecutive(Node):
                 self.get_clock().now() - self.reverse_start_time
             ).nanoseconds * 1e-9
 
-            if elapsed > 2.0:
+            if elapsed > 4.0:
                 self.get_logger().info("Reverse complete. Resuming navigation.")
                 self.hit_the_brakes()
                 self.set_state(State.NAVIGATING)
