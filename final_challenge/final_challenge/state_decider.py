@@ -291,8 +291,8 @@ class BoatingExecutive(Node):
             # self.set_state(State.DONE)
 
     def resume_route_after_search(self):
-        if self.state != State.METER_SEARCH:
-            return
+        # if self.state != State.METER_SEARCH:
+        #     return
 
         # If we have more outbound goals to visit
         if self.route_index < len(self.route_goals) - 1:
@@ -470,7 +470,9 @@ class BoatingExecutive(Node):
 
             if elapsed > 2.0:
                 self.get_logger().info("Reverse complete. Resuming navigation.")
+                self.hit_the_brakes()
                 self.set_state(State.NAVIGATING)
+
 
         elif self.state == State.DONE:
             self.hit_the_brakes()
