@@ -278,7 +278,35 @@ class BoatingExecutive(Node):
             self.get_logger().info("Returned to start point. Mission complete.")
             # self.set_state(State.DONE)
 
+    def resume_route_after_search(self):
+        if self.state != State.METER_SEARCH:
+            return
 
+        # If we have more outbound goals to visit
+        if self.route_index < len(self.route_goals) - 1:
+            self.route_index += 1
+            self.current_goal = self.route_goals[self.route_index]
+
+            self.get_logger().info(
+                f"Advancing to route point {self.route_index + 1}/"
+                f"{len(self.route_goals)}."
+            )
+
+            self.set_state(State.NAVIGATING)
+            self.publish_current_goal()
+
+        # If we just finished searching at the final outbound goal
+        else:
+            if len(self.outbound_goals) < self.min_outbound_goals:
+                self.get_logger().info(
+                    f"Reached current final goal, but waiting for more."
+                )
+                self.set_state(State.WAITING)
+            else:
+                self.get_logger().info(
+                    "Searched final outbound goal. Starting three-point turn."
+                )
+                self.set_state(State.THREE_POINT_TURN)
 
     def traffic_light_obstacle_callback(self, msg: Bool):
         self.traffic_light_obstacle = msg.data
