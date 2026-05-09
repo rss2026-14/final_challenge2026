@@ -216,12 +216,14 @@ class BoatingExecutive(Node):
         pass
 
     def parking_meter_callback(self, msg: ConeLocation):
-        # Parking bypassed for this version.
-        pass
+        if self.state == State.METER_SEARCH:
+            self.get_logger().info("Meter detected! (Parking disabled). Resuming route.")
+            self.resume_route_after_search()
 
     def meter_search_failed_callback(self, msg: Bool):
-        # Parking bypassed for this version.
-        pass
+        if msg.data and self.state == State.METER_SEARCH:
+            self.get_logger().info("Meter search complete. Resuming route.")
+            self.resume_route_after_search()
 
     def trajectory_reached_callback(self, msg: Bool):
         # if msg.data and self.state == State.NAVIGATING:
@@ -234,7 +236,8 @@ class BoatingExecutive(Node):
                 # self.set_state(State.DONE)
             else:
                 self.get_logger().info("Trajectory follower reported goal reached.")
-                self.advance_to_next_route_point()
+                # self.advance_to_next_route_point()
+                self.set_state(State.METER_SEARCH)
 
     def advance_to_next_route_point(self):
         if self.state != State.NAVIGATING:
@@ -274,6 +277,8 @@ class BoatingExecutive(Node):
         else:
             self.get_logger().info("Returned to start point. Mission complete.")
             # self.set_state(State.DONE)
+
+
 
     def traffic_light_obstacle_callback(self, msg: Bool):
         self.traffic_light_obstacle = msg.data
@@ -328,7 +333,7 @@ class BoatingExecutive(Node):
                         f"Within {self.goal_reach_distance:.2f}m of current goal. "
                         f"Distance: {dist:.2f}."
                     )
-                    self.advance_to_next_route_point()
+                    self.set_state(State.METER_SEARCH)
 
             self.state_just_changed = False
 
@@ -394,6 +399,9 @@ class BoatingExecutive(Node):
         elif self.state == State.OBSTACLE_PAUSE:
             self.hit_the_brakes()
 
+        elif self.state == State.METER_SEARCH:
+            pass
+
         elif self.state == State.DONE:
             self.hit_the_brakes()
 
@@ -448,7 +456,8 @@ class BoatingExecutive(Node):
                 State.NAVIGATING,
                 State.THREE_POINT_TURN,
                 State.OBSTACLE_PAUSE,
-                State.DONE
+                State.DONE,
+                State.METER_SEARCH
             ],
             State.THREE_POINT_TURN: [
                 State.NAVIGATING,
@@ -459,7 +468,12 @@ class BoatingExecutive(Node):
                 State.NAVIGATING,
                 State.THREE_POINT_TURN
             ],
-            State.METER_SEARCH: [],
+            State.METER_SEARCH: [
+                State.NAVIGATING,
+                State.THREE_POINT_TURN,
+                State.OBSTACLE_PAUSE
+            ],
+            # Leave Parking/Parked empty for now
             State.PARKING: [],
             State.PARKED: [],
             State.DONE: []
