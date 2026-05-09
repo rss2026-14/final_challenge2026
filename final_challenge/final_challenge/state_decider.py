@@ -409,8 +409,8 @@ class BoatingExecutive(Node):
         drive_cmd = AckermannDriveStamped()
         drive_cmd.header.stamp = self.get_clock().now().to_msg()
         drive_cmd.header.frame_id = "base_link"
-        drive_cmd.drive.speed = float(speed)
-        drive_cmd.drive.steering_angle = float(steering_angle)
+        drive_cmd.drive.speed = speed
+        drive_cmd.drive.steering_angle = steering_angle
 
         self.drive_pub.publish(drive_cmd)
 
