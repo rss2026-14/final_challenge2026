@@ -231,7 +231,7 @@ class BoatingExecutive(Node):
             if self.is_returning:
                 # If we get a reached signal while returning, the mission is over.
                 self.get_logger().info("Returned to start point. Mission complete.")
-                self.set_state(State.DONE)
+                # self.set_state(State.DONE)
             else:
                 self.get_logger().info("Trajectory follower reported goal reached.")
                 self.advance_to_next_route_point()
@@ -273,7 +273,7 @@ class BoatingExecutive(Node):
             self.set_state(State.THREE_POINT_TURN)
         else:
             self.get_logger().info("Returned to start point. Mission complete.")
-            self.set_state(State.DONE)
+            # self.set_state(State.DONE)
 
     def traffic_light_obstacle_callback(self, msg: Bool):
         self.traffic_light_obstacle = msg.data
@@ -333,8 +333,8 @@ class BoatingExecutive(Node):
             self.state_just_changed = False
 
         elif self.state == State.THREE_POINT_TURN:
-            if self.turn_start_time is None:
-                self.turn_start_time = self.get_clock().now()
+            # if self.turn_start_time is None:
+            #     self.turn_start_time = self.get_clock().now()
 
             elapsed = (
                 self.get_clock().now() - self.turn_start_time
@@ -356,13 +356,7 @@ class BoatingExecutive(Node):
                 self.publish_drive_command(-1.0, -0.34)
 
             elif elapsed < 7.0:
-                self.publish_drive_command(1.0, 0.34)
-
-            elif elapsed < 9.0:
-                self.publish_drive_command(-1.0, -0.34)
-
-            elif elapsed < 10.0:
-                self.publish_drive_command(1.0, 0.34)
+                self.publish_drive_command(0.8, 0.34)
 
             else:
                 self.hit_the_brakes()
