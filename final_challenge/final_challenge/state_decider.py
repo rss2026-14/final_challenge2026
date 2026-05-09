@@ -231,7 +231,7 @@ class BoatingExecutive(Node):
             if self.is_returning:
                 # If we get a reached signal while returning, the mission is over.
                 self.get_logger().info("Returned to start point. Mission complete.")
-                self.set_state(State.DONE)
+                # self.set_state(State.DONE)
             else:
                 self.get_logger().info("Trajectory follower reported goal reached.")
                 self.advance_to_next_route_point()
@@ -333,8 +333,8 @@ class BoatingExecutive(Node):
             self.state_just_changed = False
 
         elif self.state == State.THREE_POINT_TURN:
-            if self.turn_start_time is None:
-                self.turn_start_time = self.get_clock().now()
+            # if self.turn_start_time is None:
+            #     self.turn_start_time = self.get_clock().now()
 
             elapsed = (
                 self.get_clock().now() - self.turn_start_time
@@ -370,7 +370,7 @@ class BoatingExecutive(Node):
                 self.is_returning = True
 
                 self.get_logger().info(
-                    "Three-point turn complete. Building return route."
+                    "Three-point turn complete."
                 )
                 self.set_state(State.NAVIGATING)
 
