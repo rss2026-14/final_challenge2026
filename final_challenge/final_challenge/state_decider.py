@@ -493,7 +493,8 @@ class BoatingExecutive(Node):
             if elapsed > 4.0:
                 self.get_logger().info("Reverse complete. Resuming navigation.")
                 self.hit_the_brakes()
-                self.set_state(State.NAVIGATING)
+                # self.set_state(State.NAVIGATING)
+                self.resume_route_after_search()
 
 
         elif self.state == State.DONE:
