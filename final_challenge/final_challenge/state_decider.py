@@ -551,7 +551,7 @@ class BoatingExecutive(Node):
         if new_state == State.THREE_POINT_TURN:
             self.turn_start_time = self.get_clock().now()
 
-        if new_state == State.PARKING:
+        if new_state == State.PARKED:
             self.parked_start_time = self.get_clock().now()
 
         self.get_logger().info(f"{self.state.name} -> {new_state.name}")
