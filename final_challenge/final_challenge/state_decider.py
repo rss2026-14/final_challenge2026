@@ -264,6 +264,10 @@ class BoatingExecutive(Node):
         #     self.get_logger().info("Trajectory follower reported goal reached.")
         #     self.advance_to_next_route_point()
         if msg.data and self.state == State.NAVIGATING:
+            if self.nav_start_time is not None:
+                elapsed = (self.get_clock().now() - self.nav_start_time).nanoseconds * 1e-9
+                if elapsed < 2.0:
+                    return
             if self.is_returning:
                 # If we get a reached signal while returning, the mission is over.
                 self.get_logger().info("Returned to start point. Mission complete.")
@@ -408,21 +412,19 @@ class BoatingExecutive(Node):
                 self.get_clock().now() - self.turn_start_time
             ).nanoseconds * 1e-9
 
-            if elapsed < 1.5:
+            if elapsed < 2.0:
                 self.publish_drive_command(-1.0, -0.35)
 
-            elif elapsed < 2.5:
-                # Phase 2: reverse right
+            elif elapsed < 3.0:
                 self.publish_drive_command(0.8, 0.35)
-
-            elif elapsed < 4.0:
-                # Phase 3: forward straight
-                self.publish_drive_command(-1.0, -0.35)
 
             elif elapsed < 5.0:
+                self.publish_drive_command(-1.0, -0.35)
+
+            elif elapsed < 6.0:
                 self.publish_drive_command(0.8, 0.35)
 
-            elif elapsed < 6.5:
+            elif elapsed < 7.5:
                 self.publish_drive_command(-1.0, 0.35)
 
             else:
@@ -632,6 +634,9 @@ class BoatingExecutive(Node):
 
         if new_state == State.REVERSE_AFTER_PARK:
             self.reverse_start_time = self.get_clock().now()
+
+        if new_state == State.NAVIGATING:
+            self.nav_start_time = self.get_clock().now()
 
         self.get_logger().info(f"{self.state.name} -> {new_state.name}")
 
