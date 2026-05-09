@@ -39,27 +39,27 @@ class MeterSearchController(Node):
         self.declare_parameter("scan_topic", "/scan")
         self.declare_parameter("drive_topic", "/vesc/input/navigation")
 
-        self.declare_parameter("near_wall_distance", 0.5)
-        self.declare_parameter("far_wall_distance", 1.0)
+        self.declare_parameter("near_wall_distance", 0.55)
+        self.declare_parameter("far_wall_distance", 0.75)
 
-        self.declare_parameter("approach_speed", 0.7)
-        self.declare_parameter("back_up_speed", -1.0)
-        self.declare_parameter("k_turn_speed", 0.9)
+        self.declare_parameter("approach_speed", 0.35)
+        self.declare_parameter("back_up_speed", -0.35)
+        self.declare_parameter("k_turn_speed", 0.35)
 
-        self.declare_parameter("max_steering_angle", 0.34)
-        self.declare_parameter("wall_angle_gain", 0.8)
+        self.declare_parameter("max_steering_angle", 0.38)
+        self.declare_parameter("wall_angle_gain", 0.5)
 
         self.declare_parameter("min_valid_range", 0.08)
         self.declare_parameter("max_valid_range", 8.0)
 
-        self.declare_parameter("forward_search_angle", math.pi / 4.0)
+        self.declare_parameter("forward_search_angle", math.pi / 6.0)
 
-        self.declare_parameter("k_turn_forward_duration", 0.8)
-        self.declare_parameter("k_turn_reverse_duration", 1.0)
+        self.declare_parameter("k_turn_forward_duration", 0.35)
+        self.declare_parameter("k_turn_reverse_duration", 0.45)
 
-        self.declare_parameter("reverse_pause_duration", 1.0)
+        self.declare_parameter("reverse_pause_duration", 0.25)
 
-        self.declare_parameter("max_k_turn_cycles", 6)
+        self.declare_parameter("max_k_turn_cycles", 8)
 
         self.scan_topic = self.get_parameter("scan_topic").value
         self.drive_topic = self.get_parameter("drive_topic").value
