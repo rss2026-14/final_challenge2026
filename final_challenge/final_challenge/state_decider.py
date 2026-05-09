@@ -95,6 +95,7 @@ class BoatingExecutive(Node):
         )
 
         self.parked_start_time = None
+        self.nav_start_time = None
 
         self.declare_parameter("parked_duration", 5.0)
         self.parked_duration = (
@@ -266,7 +267,7 @@ class BoatingExecutive(Node):
         if msg.data and self.state == State.NAVIGATING:
             if self.nav_start_time is not None:
                 elapsed = (self.get_clock().now() - self.nav_start_time).nanoseconds * 1e-9
-                if elapsed < 2.0:
+                if elapsed < 5.0:
                     return
             if self.is_returning:
                 # If we get a reached signal while returning, the mission is over.
