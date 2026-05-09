@@ -25,7 +25,7 @@ class PurePursuit(Node):
 
         self.declare_parameter('odom_topic', "/vesc/odom")
         self.declare_parameter('drive_topic', "/vesc/input/navigation")
-        self.declare_parameter('derivative_gain', 0.05)
+        self.declare_parameter('derivative_gain', 0.0)
 
         self.odom_topic = self.get_parameter('odom_topic').value
         self.drive_topic = self.get_parameter('drive_topic').value
