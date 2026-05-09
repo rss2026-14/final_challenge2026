@@ -162,10 +162,16 @@ class BoatingExecutive(Node):
     def odom_callback(self, msg: Odometry):
         self.current_pose = msg.pose.pose
 
-        # Save the start pose once, before the mission starts.
-        if self.start_pose_goal is None and not self.mission_started:
+        # Latch the very first odometry pose as the fixed start forever.
+        if self.start_pose_goal is None:
             self.start_pose_goal = self.pose_to_pose_stamped(msg)
             self.start_and_goal_points = [self.start_pose_goal]
+
+            self.get_logger().info(
+                f"Latched fixed start pose: "
+                f"x={self.start_pose_goal.pose.position.x:.2f}, "
+                f"y={self.start_pose_goal.pose.position.y:.2f}"
+            )
 
     def pose_to_pose_stamped(self, odom_msg: Odometry):
         pose_stamped = PoseStamped()
