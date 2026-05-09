@@ -143,6 +143,7 @@ class ParkingController(Node):
             else:
                 steering_angle = -angle * self.angle_multiplier
                 velocity = -self.velocity
+
         elif distance_error < 0:
             if abs(angle) < self.reverse_range:
                 steering_angle = 0.0
