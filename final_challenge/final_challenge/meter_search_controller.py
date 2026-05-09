@@ -14,10 +14,9 @@ from std_msgs.msg import Bool, String
 class SearchPhase(Enum):
     APPROACH_WALL = 1
     PAUSE_BEFORE_REVERSE = 2
-    BACK_UP = 3
-    K_TURN_FORWARD = 4
-    K_TURN_REVERSE = 5
-    FAILED = 6
+    K_TURN_FORWARD = 3
+    K_TURN_REVERSE = 4
+    FAILED = 5
 
 
 class MeterSearchController(Node):
@@ -233,8 +232,8 @@ class MeterSearchController(Node):
         elif self.phase == SearchPhase.PAUSE_BEFORE_REVERSE:
             self.pause_before_reverse()
 
-        elif self.phase == SearchPhase.BACK_UP:
-            self.back_up_from_wall()
+        # elif self.phase == SearchPhase.BACK_UP:
+        #     self.back_up_from_wall()
 
         elif self.phase == SearchPhase.K_TURN_FORWARD:
             self.k_turn_forward()
@@ -279,41 +278,41 @@ class MeterSearchController(Node):
         if elapsed >= self.reverse_pause_duration:
             self.set_phase(SearchPhase.K_TURN_REVERSE)
 
-    def back_up_from_wall(self):
-        if self.closest_wall_distance is None:
-            self.publish_drive_command(0.0, 0.0)
+    # def back_up_from_wall(self):
+    #     if self.closest_wall_distance is None:
+    #         self.publish_drive_command(0.0, 0.0)
 
-            self.get_logger().warn(
-                "Lost wall during reverse."
-            )
+    #         self.get_logger().warn(
+    #             "Lost wall during reverse."
+    #         )
 
-            return
+    #         return
 
-        if self.closest_wall_distance >= self.far_wall_distance:
-            self.set_phase(SearchPhase.K_TURN_FORWARD)
-            return
+    #     if self.closest_wall_distance >= self.far_wall_distance:
+    #         self.set_phase(SearchPhase.K_TURN_FORWARD)
+    #         return
 
-        # IMPORTANT:
-        # Reverse steering should usually keep the same sign.
-        # The vehicle dynamics naturally invert motion.
+    #     # IMPORTANT:
+    #     # Reverse steering should usually keep the same sign.
+    #     # The vehicle dynamics naturally invert motion.
 
-        steering = np.clip(
-            self.wall_angle_gain * self.closest_wall_angle,
-            -self.max_steering_angle,
-            self.max_steering_angle,
-        )
+    #     steering = np.clip(
+    #         self.wall_angle_gain * self.closest_wall_angle,
+    #         -self.max_steering_angle,
+    #         self.max_steering_angle,
+    #     )
 
-        self.get_logger().info(
-            f"BACKING UP | "
-            f"dist={self.closest_wall_distance:.2f} | "
-            f"angle={self.closest_wall_angle:.2f} | "
-            f"steering={steering:.2f}"
-        )
+    #     self.get_logger().info(
+    #         f"BACKING UP | "
+    #         f"dist={self.closest_wall_distance:.2f} | "
+    #         f"angle={self.closest_wall_angle:.2f} | "
+    #         f"steering={steering:.2f}"
+    #     )
 
-        self.publish_drive_command(
-            self.back_up_speed,
-            steering
-        )
+    #     self.publish_drive_command(
+    #         self.back_up_speed,
+    #         steering
+    #     )
 
     def k_turn_forward(self):
         elapsed = self.now_sec() - self.phase_start_time
