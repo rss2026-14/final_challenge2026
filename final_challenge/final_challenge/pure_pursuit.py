@@ -25,7 +25,7 @@ class PurePursuit(Node):
 
         self.declare_parameter('odom_topic', "/vesc/odom")
         self.declare_parameter('drive_topic', "/vesc/input/navigation")
-        self.declare_parameter('derivative_gain', 0.0)
+        self.declare_parameter('derivative_gain', 0.1)
 
         self.odom_topic = self.get_parameter('odom_topic').value
         self.drive_topic = self.get_parameter('drive_topic').value
@@ -111,7 +111,7 @@ class PurePursuit(Node):
         if abs(steering_angle) < 0.15:
             steering_angle *= 0.25
         else:
-            steering_angle *= 0.85
+            steering_angle *= 0.75
         steering_angle=np.clip(steering_angle,-0.34,0.34)
 
         now = self.get_clock().now().nanoseconds * 1e-9
