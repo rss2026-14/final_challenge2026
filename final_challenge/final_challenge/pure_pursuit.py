@@ -7,6 +7,8 @@ import numpy as np
 from ackermann_msgs.msg import AckermannDriveStamped
 from nav_msgs.msg import Odometry
 from vs_msgs.msg import ConeLocation
+from rcl_interfaces.msg import SetParametersResult
+
 
 
 class PurePursuit(Node):
@@ -26,10 +28,14 @@ class PurePursuit(Node):
         self.declare_parameter('odom_topic', "/vesc/odom")
         self.declare_parameter('drive_topic', "/vesc/input/navigation")
         self.declare_parameter('derivative_gain', 0.0)
+        self.declare_parameter('straight_p', 0.4)
+        self.declare_parameter('curve_p', 0.75)
 
         self.odom_topic = self.get_parameter('odom_topic').value
         self.drive_topic = self.get_parameter('drive_topic').value
-        self.derivative_gain = self.get_parameter('derivative_gain').value
+        self.derivative_gain = self.get_parameter('derivative_gain').double_value
+        self.straight_p = self.get_parameter('straight_p').double_value
+        self.curve_p = self.get_parameter('curve_p').double_value
 
         self.wheelbase_length = 0.33 #in meters
         self.base_speed = 4.0
@@ -49,6 +55,9 @@ class PurePursuit(Node):
         self.drive_pub = self.create_publisher(AckermannDriveStamped, self.drive_topic, 10)
 
         self.get_logger().info("Point Follower Initialized")
+
+        self.add_on_set_parameters_callback(self.parameters_callback)
+
 
     def track_callback(self, msg):
         """
@@ -109,9 +118,9 @@ class PurePursuit(Node):
         steering_angle = np.arctan2(2*self.wheelbase_length*target_y, actual_lookahead_sq)
 
         if abs(steering_angle) < 0.15:
-            steering_angle *= 0.4
+            steering_angle *= self.straight_p
         else:
-            steering_angle *= 0.75
+            steering_angle *= self.curve_p
         steering_angle=np.clip(steering_angle,-0.34,0.34)
 
         now = self.get_clock().now().nanoseconds * 1e-9
@@ -151,6 +160,23 @@ class PurePursuit(Node):
         drive_cmd.drive.steering_angle = float(steering_angle)
 
         self.drive_pub.publish(drive_cmd)
+
+    def parameters_callback(self, params):
+        """
+        Dynamically updates parameters when modified via 'ros2 param set'.
+        """
+        for param in params:
+            if param.name == 'derivative_gain':
+                self.derivative_gain = param.value
+                self.get_logger().info(f"Updated deriv gain to {self.derivative_gain}")
+            elif param.name == 'straight_p':
+                self.straight_p = param.value
+                self.get_logger().info(f"Updated straight_p to {self.straight_p}")
+            elif param.name == 'curve_p':
+                self.curve_p = param.value
+                self.get_logger().info(f"Updated curve_p to {self.curve_p}")
+
+        return SetParametersResult(successful=True)
 
 
 def main(args=None):
