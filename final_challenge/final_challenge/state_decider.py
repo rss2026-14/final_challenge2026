@@ -334,12 +334,19 @@ class BoatingExecutive(Node):
             elif elapsed < 7.0:
                 self.publish_drive_command(1.0, 0.34)
 
+            elif elapsed < 9.0:
+                self.publish_drive_command(-1.0, -0.34)
+
+            elif elapsed < 10.0:
+                self.publish_drive_command(1.0, 0.34)
+
             else:
                 self.hit_the_brakes()
 
                 self.get_logger().info(
                     "Three-point turn complete. Building return route."
                 )
+                self.set_state(State.NAVIGATING)
 
                 #self.is_returning = True
 
