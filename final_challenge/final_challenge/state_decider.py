@@ -13,6 +13,13 @@ from std_msgs.msg import Bool, String
 from ackermann_msgs.msg import AckermannDriveStamped
 from vs_msgs.msg import ConeLocation
 
+import os
+from datetime import datetime
+
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+import cv2
+
 
 class State(Enum):
     WAITING = 1
@@ -96,6 +103,11 @@ class BoatingExecutive(Node):
         )
 
         self.traffic_light_obstacle = False
+        self.bridge = CvBridge()
+        self.latest_annotated_image = None
+        self.picture_saved_for_current_park = False
+
+        self.parked_image_folder = os.path.dirname(os.path.abspath(__file__))
 
         self.goal_pub = self.create_publisher(
             PoseStamped,
@@ -164,6 +176,13 @@ class BoatingExecutive(Node):
             10
         )
 
+        self.create_subscription(
+            Image,
+            "/yolo/annotated_image",
+            self.annotated_image_callback,
+            10
+        )
+
         self.timer = self.create_timer(0.1, self.loop)
 
         self.get_logger().info("State Decider Initialized: Indexed Route Mode")
@@ -187,6 +206,9 @@ class BoatingExecutive(Node):
         pose_stamped.header = odom_msg.header
         pose_stamped.pose = copy.deepcopy(odom_msg.pose.pose)
         return pose_stamped
+
+    def annotated_image_callback(self, msg: Image):
+        self.latest_annotated_image = msg
 
     def goal_callback(self, msg: PoseStamped):
         if self.is_returning:
@@ -500,6 +522,38 @@ class BoatingExecutive(Node):
 
         self.drive_pub.publish(drive_cmd)
 
+    def save_parked_annotated_image(self):
+        if self.picture_saved_for_current_park:
+            return
+
+        if self.latest_annotated_image is None:
+            self.get_logger().warn(
+                "Cannot save parked photo: no /yolo/annotated_image received yet."
+            )
+            return
+
+        try:
+            cv_image = self.bridge.imgmsg_to_cv2(
+                self.latest_annotated_image,
+                desired_encoding="bgr8"
+            )
+        except Exception as exc:
+            self.get_logger().error(
+                f"Could not convert YOLO annotated image: {exc}"
+            )
+            return
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"parked_yolo_annotated_{timestamp}.jpg"
+        image_path = os.path.join(self.parked_image_folder, filename)
+
+        if not cv2.imwrite(image_path, cv_image):
+            self.get_logger().error(f"Failed to save parked photo: {image_path}")
+            return
+
+        self.picture_saved_for_current_park = True
+        self.get_logger().info(f"Saved parked photo: {image_path}")
+
     def set_state(self, new_state):
         if new_state == self.state:
             self.state_just_changed = True
@@ -551,6 +605,9 @@ class BoatingExecutive(Node):
         if new_state == State.THREE_POINT_TURN:
             self.turn_start_time = self.get_clock().now()
 
+        if new_state == State.PARKING:
+            self.picture_saved_for_current_park = False
+
         if new_state == State.PARKED:
             self.parked_start_time = self.get_clock().now()
 
@@ -559,6 +616,9 @@ class BoatingExecutive(Node):
         self.previous_state = self.state
         self.state = new_state
         self.state_just_changed = True
+
+        if new_state == State.PARKED:
+            self.save_parked_annotated_image()
 
 
 def main(args=None):
