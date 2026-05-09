@@ -54,8 +54,8 @@ class MeterSearchController(Node):
 
         self.declare_parameter("forward_search_angle", math.pi / 6.0)
 
-        self.declare_parameter("k_turn_forward_duration", 0.35)
-        self.declare_parameter("k_turn_reverse_duration", 0.7)
+        self.declare_parameter("k_turn_forward_duration", 0.9)
+        self.declare_parameter("k_turn_reverse_duration", 1.0)
 
         self.declare_parameter("reverse_pause_duration", 0.25)
 
