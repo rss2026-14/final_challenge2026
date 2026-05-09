@@ -121,7 +121,7 @@ class MeterSearchController(Node):
 
         self.current_state = "WAITING"
 
-        self.phase = SearchPhase.APPROACH_WALL
+        self.phase = SearchPhase.K_TURN_FORWARD
 
         self.closest_wall_distance = None
         self.closest_wall_angle = 0.0
@@ -341,7 +341,8 @@ class MeterSearchController(Node):
             return
 
         self.publish_drive_command(
-            -self.k_turn_speed,
+            # -self.k_turn_speed,
+            self.back_up_speed,
             -self.max_steering_angle
         )
 
