@@ -36,7 +36,7 @@ class PurePursuit(Node):
 
         self.target_point = None
 
-        self.alpha = 0.65  # 0 = no smoothing, 1 = very smooth
+        self.alpha = 0.0  # 0 = no smoothing, 1 = very smooth
         self.last_desired_steering_angle = None
         self.last_steering_angle = 0.0
         self.last_control_time = None
