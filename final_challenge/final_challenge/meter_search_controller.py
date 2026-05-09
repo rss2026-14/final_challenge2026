@@ -59,7 +59,7 @@ class MeterSearchController(Node):
 
         self.declare_parameter("reverse_pause_duration", 0.5)
 
-        self.declare_parameter("max_k_turn_cycles", 15)
+        self.declare_parameter("max_k_turn_cycles", 17)
 
         self.scan_topic = self.get_parameter("scan_topic").value
         self.drive_topic = self.get_parameter("drive_topic").value
