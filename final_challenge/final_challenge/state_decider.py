@@ -408,23 +408,22 @@ class BoatingExecutive(Node):
                 self.get_clock().now() - self.turn_start_time
             ).nanoseconds * 1e-9
 
-            if elapsed < 1.0:
-                # Phase 1: forward left
-                self.publish_drive_command(0.85, 0.34)
+            if elapsed < 1.5:
+                self.publish_drive_command(-1.0, -0.35)
 
-            elif elapsed < 3.0:
+            elif elapsed < 2.5:
                 # Phase 2: reverse right
-                self.publish_drive_command(-1.0, -0.34)
+                self.publish_drive_command(0.8, 0.35)
 
             elif elapsed < 4.0:
                 # Phase 3: forward straight
-                self.publish_drive_command(1.0, 0.34)
+                self.publish_drive_command(-1.0, -0.35)
 
-            elif elapsed < 6.0:
-                self.publish_drive_command(-1.0, -0.34)
+            elif elapsed < 5.0:
+                self.publish_drive_command(0.8, 0.35)
 
-            elif elapsed < 7.0:
-                self.publish_drive_command(0.8, 0.34)
+            elif elapsed < 6.5:
+                self.publish_drive_command(-1.0, 0.35)
 
             else:
                 self.hit_the_brakes()
