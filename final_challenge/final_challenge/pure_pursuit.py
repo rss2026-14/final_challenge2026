@@ -31,11 +31,11 @@ class PurePursuit(Node):
         self.declare_parameter('straight_p', 0.4)
         self.declare_parameter('curve_p', 0.75)
 
-        self.odom_topic = self.get_parameter('odom_topic').value
-        self.drive_topic = self.get_parameter('drive_topic').value
-        self.derivative_gain = self.get_parameter('derivative_gain').double_value
-        self.straight_p = self.get_parameter('straight_p').double_value
-        self.curve_p = self.get_parameter('curve_p').double_value
+        self.odom_topic = self.get_parameter('odom_topic').get_parameter_value().string_value
+        self.drive_topic = self.get_parameter('drive_topic').get_parameter_value().string_value
+        self.derivative_gain = self.get_parameter('derivative_gain').get_parameter_value().double_value
+        self.straight_p = self.get_parameter('straight_p').get_parameter_value().double_value
+        self.curve_p = self.get_parameter('curve_p').get_parameter_value().double_value
 
         self.wheelbase_length = 0.33 #in meters
         self.base_speed = 4.0
