@@ -24,8 +24,8 @@ class TrackDetector(Node):
     def __init__(self):
         super().__init__("track_detector")
 
-        self.declare_parameter("target_smoothing_alpha", 0.1)
-        self.declare_parameter("max_target_jump_ratio", 0.12)
+        self.declare_parameter("target_smoothing_alpha", 0.0)
+        self.declare_parameter("max_target_jump_ratio", 0.9)
         self.declare_parameter("max_center_offset_ratio", 0.35)
         self.target_smoothing_alpha = (
             self.get_parameter("target_smoothing_alpha")
