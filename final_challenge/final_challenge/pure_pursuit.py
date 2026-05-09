@@ -111,7 +111,7 @@ class PurePursuit(Node):
         if abs(steering_angle) < 0.15:
             steering_angle *= 0.25
         else:
-            steering_angle *= 0.55
+            steering_angle *= 0.7
         steering_angle=np.clip(steering_angle,-0.34,0.34)
 
         now = self.get_clock().now().nanoseconds * 1e-9
